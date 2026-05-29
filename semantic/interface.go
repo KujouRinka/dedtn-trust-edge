@@ -1,5 +1,5 @@
 package semantic
 
 type Generator interface {
-	Read() interface{}
+	Read() <-chan interface{}
 }

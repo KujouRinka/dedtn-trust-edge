@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package yolo;
+
+option go_package = "github.com/KujouRinka/semantic/yolo";
+
+service YoloService {
+  rpc CopyAndPaste (FrameRequest) returns (FrameRequest);
+  rpc DetectFrame (FrameRequest) returns (DetectReply);
+}
+
+message FrameRequest {
+  bytes image_data = 1;
+  int32 camera_id = 2;
+}
+
+message DetectReply {
+  repeated Box boxes = 1;
+}
+
+message Box {
+  string class_name = 1;
+  int32 class_id = 2;
+  float confidence = 3;
+  float x1 = 4;
+  float y1 = 5;
+  float x2 = 6;
+  float y2 = 7;
+}

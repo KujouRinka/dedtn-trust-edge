@@ -33,6 +33,9 @@ go.work.sum
 
 bin/
 keystore/
+.venv/
 .idea/
 .vscode/
-.DS_Store/
+.DS_Store
+
+yolo26n.pt
