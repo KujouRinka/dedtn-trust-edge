@@ -16,6 +16,25 @@ python3 -m grpc_tools.protoc \
   --grpc_python_out=./semantic/yolo \
   ./semantic/yolo/rpc.proto
 
+# install gstreamer
+case "$(uname)" in
+  Darwin)
+    brew install gstreamer
+    brew install gst-plugins-base
+    brew install gst-plugins-good
+    brew install gst-plugins-bad
+    brew install gst-libav
+
+    brew install protobuf
+    ;;
+  Linux)
+    echo "Linux"
+    ;;
+  *)
+    echo "Other"
+    ;;
+esac
+
 go generate proto.go
 
 protoc -I=./semantic/yolo \

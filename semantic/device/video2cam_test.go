@@ -1,15 +1,14 @@
-package semantic
+package device
 
 import (
 	"context"
 	"testing"
 
-	"github.com/kujourinka/dedtn-trust-edge/semantic/device"
 	"github.com/kujourinka/dedtn-trust-edge/semantic/yolo"
 )
 
 func TestVideo2Cam(t *testing.T) {
-	virtualCam, err := device.NewVideo2Cam("./assets/video.mp4")
+	virtualCam, err := NewVideo2Cam("./assets/video.mp4")
 	if err != nil {
 		t.Fatal("cannot create video2cam:", err)
 	}

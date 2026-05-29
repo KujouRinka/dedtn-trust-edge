@@ -1,3 +1,4 @@
+import argparse
 import sys
 import logging
 
@@ -18,19 +19,20 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class YoloPredict(object):
-  def __init__(self, model_name="yolo26n.pt"):
+  def __init__(self, model_name="yolo26n.pt", save=False):
     self._model = YOLO(model_name)
+    self._save = save
 
   def predict(self, data_byte):
     nparr = np.frombuffer(data_byte, np.uint8)
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    results = self._model.predict(img)
+    results = self._model.predict(img, save=self._save, name="detect_result")
     return results
 
 
 class GrpcServicer(rpc_pb2_grpc.YoloServiceServicer):
-  def __init__(self):
-    self._predictor = YoloPredict("yolo26n.pt")
+  def __init__(self, save):
+    self._predictor = YoloPredict("yolo26n.pt", save)
 
   def CopyAndPaste(self, request, context):
     logger.info("CopyAndPaste test")
@@ -59,13 +61,14 @@ class GrpcServicer(rpc_pb2_grpc.YoloServiceServicer):
 
 
 class GrpcServer(object):
-  def __init__(self, host, port):
+  def __init__(self, host, port, is_save):
     self._host = host
     self._port = port
+    self._save = is_save
 
   def serve(self):
     server = grpc.server(ThreadPoolExecutor(max_workers=10))
-    rpc_pb2_grpc.add_YoloServiceServicer_to_server(GrpcServicer(), server)
+    rpc_pb2_grpc.add_YoloServiceServicer_to_server(GrpcServicer(self._save), server)
     server.add_insecure_port(self._host + ":" + str(self._port))
     server.start()
     logger.info("YOLO RPC server up")
@@ -73,8 +76,14 @@ class GrpcServer(object):
 
 
 def main():
-  host, port = sys.argv[1], sys.argv[2]
-  serv = GrpcServer(host, int(port))
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--host", type=str, default="localhost")
+  parser.add_argument("--port", type=int, default=23334)
+  parser.add_argument("--save", action="store_true")
+  args = parser.parse_args()
+
+  host, port = args.host, args.port
+  serv = GrpcServer(host, int(port), args.save)
   serv.serve()
 
 

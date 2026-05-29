@@ -32,11 +32,12 @@ go.work.sum
 # .vscode/
 
 bin/
-keystore/
 .venv/
 .idea/
 .vscode/
 .DS_Store
 
 sol/ref
+runs/
+keystore/
 yolo26n.pt
