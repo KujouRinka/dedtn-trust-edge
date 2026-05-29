@@ -38,4 +38,5 @@ keystore/
 .vscode/
 .DS_Store
 
+sol/ref
 yolo26n.pt
