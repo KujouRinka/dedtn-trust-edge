@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"time"
 
@@ -102,7 +103,6 @@ func (c *video2cam) CurrentFrame() ([]byte, error) {
 	if sample == nil {
 		return nil, fmt.Errorf("failed to pull jpeg frame at %v", position)
 	}
-	defer sample.Unref()
 
 	buffer := sample.GetBuffer()
 	if buffer == nil {
@@ -111,13 +111,24 @@ func (c *video2cam) CurrentFrame() ([]byte, error) {
 
 	size, _, _ := buffer.GetSizes()
 	imgBytes := buffer.Extract(0, size)
-	// imgBytes := make([]byte, 0, len(buffer.Bytes()))
-	// imgBytes = append(imgBytes, buffer.Bytes()...)
+
+	runtime.KeepAlive(buffer)
+	runtime.KeepAlive(sample)
 
 	return imgBytes, nil
 }
 
 func (c *video2cam) Close() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.pipeline != nil {
+		if err := c.pipeline.SetState(gst.StateNull); err != nil {
+			return err
+		}
+		c.pipeline = nil
+		c.sink = nil
+	}
 	return nil
 }
 
