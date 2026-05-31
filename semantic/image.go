@@ -39,10 +39,11 @@ func NewImgSemanticGen(cfg *ImageSemanticConfig, ctx context.Context) (*ImgSeman
 }
 
 func (i *ImgSemanticGen) Run() error {
+	defer close(i.msg)
+
 	for {
 		select {
 		case <-i.ctx.Done():
-			close(i.msg)
 			return i.ctx.Err()
 		default:
 			frame, err := i.camera.CurrentFrame()
@@ -55,6 +56,9 @@ func (i *ImgSemanticGen) Run() error {
 				ImageData: frame,
 				CameraId:  0,
 			})
+			if err != nil {
+				return err
+			}
 
 			i.msg <- resp.Boxes
 			time.Sleep(i.watchInterval)
