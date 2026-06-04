@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v7.35.0
-// source: rpc.proto
+// source: yolo_rpc.proto
 
 package yolo
 
@@ -31,7 +31,7 @@ type FrameRequest struct {
 
 func (x *FrameRequest) Reset() {
 	*x = FrameRequest{}
-	mi := &file_rpc_proto_msgTypes[0]
+	mi := &file_yolo_rpc_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -43,7 +43,7 @@ func (x *FrameRequest) String() string {
 func (*FrameRequest) ProtoMessage() {}
 
 func (x *FrameRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_rpc_proto_msgTypes[0]
+	mi := &file_yolo_rpc_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -56,7 +56,7 @@ func (x *FrameRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FrameRequest.ProtoReflect.Descriptor instead.
 func (*FrameRequest) Descriptor() ([]byte, []int) {
-	return file_rpc_proto_rawDescGZIP(), []int{0}
+	return file_yolo_rpc_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *FrameRequest) GetImageData() []byte {
@@ -82,7 +82,7 @@ type DetectReply struct {
 
 func (x *DetectReply) Reset() {
 	*x = DetectReply{}
-	mi := &file_rpc_proto_msgTypes[1]
+	mi := &file_yolo_rpc_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -94,7 +94,7 @@ func (x *DetectReply) String() string {
 func (*DetectReply) ProtoMessage() {}
 
 func (x *DetectReply) ProtoReflect() protoreflect.Message {
-	mi := &file_rpc_proto_msgTypes[1]
+	mi := &file_yolo_rpc_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -107,7 +107,7 @@ func (x *DetectReply) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DetectReply.ProtoReflect.Descriptor instead.
 func (*DetectReply) Descriptor() ([]byte, []int) {
-	return file_rpc_proto_rawDescGZIP(), []int{1}
+	return file_yolo_rpc_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *DetectReply) GetBoxes() []*Box {
@@ -132,7 +132,7 @@ type Box struct {
 
 func (x *Box) Reset() {
 	*x = Box{}
-	mi := &file_rpc_proto_msgTypes[2]
+	mi := &file_yolo_rpc_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -144,7 +144,7 @@ func (x *Box) String() string {
 func (*Box) ProtoMessage() {}
 
 func (x *Box) ProtoReflect() protoreflect.Message {
-	mi := &file_rpc_proto_msgTypes[2]
+	mi := &file_yolo_rpc_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -157,7 +157,7 @@ func (x *Box) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Box.ProtoReflect.Descriptor instead.
 func (*Box) Descriptor() ([]byte, []int) {
-	return file_rpc_proto_rawDescGZIP(), []int{2}
+	return file_yolo_rpc_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Box) GetClassName() string {
@@ -209,11 +209,11 @@ func (x *Box) GetY2() float32 {
 	return 0
 }
 
-var File_rpc_proto protoreflect.FileDescriptor
+var File_yolo_rpc_proto protoreflect.FileDescriptor
 
-const file_rpc_proto_rawDesc = "" +
+const file_yolo_rpc_proto_rawDesc = "" +
 	"\n" +
-	"\trpc.proto\x12\x04yolo\"J\n" +
+	"\x0eyolo_rpc.proto\x12\x04yolo\"J\n" +
 	"\fFrameRequest\x12\x1d\n" +
 	"\n" +
 	"image_data\x18\x01 \x01(\fR\timageData\x12\x1b\n" +
@@ -236,24 +236,24 @@ const file_rpc_proto_rawDesc = "" +
 	"\vDetectFrame\x12\x12.yolo.FrameRequest\x1a\x11.yolo.DetectReplyB%Z#github.com/KujouRinka/semantic/yolob\x06proto3"
 
 var (
-	file_rpc_proto_rawDescOnce sync.Once
-	file_rpc_proto_rawDescData []byte
+	file_yolo_rpc_proto_rawDescOnce sync.Once
+	file_yolo_rpc_proto_rawDescData []byte
 )
 
-func file_rpc_proto_rawDescGZIP() []byte {
-	file_rpc_proto_rawDescOnce.Do(func() {
-		file_rpc_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_rpc_proto_rawDesc), len(file_rpc_proto_rawDesc)))
+func file_yolo_rpc_proto_rawDescGZIP() []byte {
+	file_yolo_rpc_proto_rawDescOnce.Do(func() {
+		file_yolo_rpc_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_yolo_rpc_proto_rawDesc), len(file_yolo_rpc_proto_rawDesc)))
 	})
-	return file_rpc_proto_rawDescData
+	return file_yolo_rpc_proto_rawDescData
 }
 
-var file_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
-var file_rpc_proto_goTypes = []any{
+var file_yolo_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_yolo_rpc_proto_goTypes = []any{
 	(*FrameRequest)(nil), // 0: yolo.FrameRequest
 	(*DetectReply)(nil),  // 1: yolo.DetectReply
 	(*Box)(nil),          // 2: yolo.Box
 }
-var file_rpc_proto_depIdxs = []int32{
+var file_yolo_rpc_proto_depIdxs = []int32{
 	2, // 0: yolo.DetectReply.boxes:type_name -> yolo.Box
 	0, // 1: yolo.YoloService.CopyAndPaste:input_type -> yolo.FrameRequest
 	0, // 2: yolo.YoloService.DetectFrame:input_type -> yolo.FrameRequest
@@ -266,26 +266,26 @@ var file_rpc_proto_depIdxs = []int32{
 	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_rpc_proto_init() }
-func file_rpc_proto_init() {
-	if File_rpc_proto != nil {
+func init() { file_yolo_rpc_proto_init() }
+func file_yolo_rpc_proto_init() {
+	if File_yolo_rpc_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_rpc_proto_rawDesc), len(file_rpc_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_yolo_rpc_proto_rawDesc), len(file_yolo_rpc_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_rpc_proto_goTypes,
-		DependencyIndexes: file_rpc_proto_depIdxs,
-		MessageInfos:      file_rpc_proto_msgTypes,
+		GoTypes:           file_yolo_rpc_proto_goTypes,
+		DependencyIndexes: file_yolo_rpc_proto_depIdxs,
+		MessageInfos:      file_yolo_rpc_proto_msgTypes,
 	}.Build()
-	File_rpc_proto = out.File
-	file_rpc_proto_goTypes = nil
-	file_rpc_proto_depIdxs = nil
+	File_yolo_rpc_proto = out.File
+	file_yolo_rpc_proto_goTypes = nil
+	file_yolo_rpc_proto_depIdxs = nil
 }

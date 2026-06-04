@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
@@ -92,4 +93,26 @@ func SendLegacyTransaction(client *ethclient.Client, keystore, passwd, toAddr st
 	}
 
 	return nil
+}
+
+func MergeChan[T any](chs ...<-chan T) <-chan T {
+	var wg sync.WaitGroup
+	out := make(chan T)
+
+	wg.Add(len(chs))
+	for _, ch := range chs {
+		go func(ch <-chan T) {
+			defer wg.Done()
+			for v := range ch {
+				out <- v
+			}
+		}(ch)
+	}
+
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+
+	return out
 }

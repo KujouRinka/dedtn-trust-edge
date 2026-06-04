@@ -12,7 +12,7 @@ import (
 )
 
 type ImgSemanticGen struct {
-	msg chan interface{}
+	msg chan SemanticClaim
 	ctx context.Context
 
 	yoloServer    *yolo.RpcClient
@@ -31,7 +31,7 @@ func NewImgSemanticGen(cfg *ImageSemanticConfig, ctx context.Context) (*ImgSeman
 
 	return &ImgSemanticGen{
 		ctx:           ctx,
-		msg:           make(chan interface{}),
+		msg:           make(chan SemanticClaim),
 		yoloServer:    yoloServer,
 		camera:        camera,
 		watchInterval: cfg.TimeInterval,
@@ -60,13 +60,13 @@ func (i *ImgSemanticGen) Run() error {
 				return err
 			}
 
-			i.msg <- resp.Boxes
+			i.msg <- SemanticClaim{Payload: resp.Boxes}
 			time.Sleep(i.watchInterval)
 		}
 	}
 }
 
-func (i *ImgSemanticGen) ReadChan() <-chan interface{} {
+func (i *ImgSemanticGen) ReadChan() <-chan SemanticClaim {
 	return i.msg
 }
 

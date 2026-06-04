@@ -1,11 +1,10 @@
-package cmd
+package logger
 
 import (
 	"fmt"
 	"os"
 	"strings"
 
-	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -15,7 +14,11 @@ var (
 	logFormat string = "console"
 )
 
-var logger *zap.Logger
+type SelfLogger struct {
+	*zap.Logger
+}
+
+var Logger *SelfLogger
 
 var logLevelMap = map[string]zapcore.Level{
 	"debug": zapcore.DebugLevel,
@@ -47,8 +50,29 @@ var logFormatMap = map[string]zapcore.EncoderConfig{
 	},
 }
 
+func (l *SelfLogger) Debugf(template string, args ...any) {
+	l.Logger.Debug(fmt.Sprintf(template, args...))
+}
+
+func (l *SelfLogger) Infof(template string, args ...any) {
+	l.Logger.Info(fmt.Sprintf(template, args...))
+}
+
+func (l *SelfLogger) Errorf(template string, args ...any) {
+	l.Logger.Error(fmt.Sprintf(template, args...))
+}
+
+func (l *SelfLogger) Warnf(template string, args ...any) {
+	l.Logger.Warn(fmt.Sprintf(template, args...))
+}
+
+func (l *SelfLogger) Panicf(template string, args ...any) {
+	l.Logger.Panic(fmt.Sprintf(template, args...))
+}
+
 func init() {
-	cobra.OnInitialize(initLogger)
+	// cobra.OnInitialize(initLogger)
+	initLogger()
 }
 
 func initLogger() {
@@ -72,7 +96,8 @@ func initLogger() {
 		ErrorOutputPaths:  []string{"stderr"},
 	}
 	var err error
-	logger, err = c.Build()
+	logger, err := c.Build()
+	Logger = &SelfLogger{Logger: logger}
 	if err != nil {
 		fmt.Printf("failed to initialize logger: %s\n", err)
 		os.Exit(1)

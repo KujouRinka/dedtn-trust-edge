@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.2
 // - protoc             v7.35.0
-// source: rpc.proto
+// source: yolo_rpc.proto
 
 package yolo
 
@@ -155,5 +155,5 @@ var YoloService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "rpc.proto",
+	Metadata: "yolo_rpc.proto",
 }

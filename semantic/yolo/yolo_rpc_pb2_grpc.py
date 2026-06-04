@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-import rpc_pb2 as rpc__pb2
+import yolo_rpc_pb2 as yolo__rpc__pb2
 
 GRPC_GENERATED_VERSION = '1.80.0'
 GRPC_VERSION = grpc.__version__
@@ -18,7 +18,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + ' but the generated code in rpc_pb2_grpc.py depends on'
+        + ' but the generated code in yolo_rpc_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -36,13 +36,13 @@ class YoloServiceStub(object):
         """
         self.CopyAndPaste = channel.unary_unary(
                 '/yolo.YoloService/CopyAndPaste',
-                request_serializer=rpc__pb2.FrameRequest.SerializeToString,
-                response_deserializer=rpc__pb2.FrameRequest.FromString,
+                request_serializer=yolo__rpc__pb2.FrameRequest.SerializeToString,
+                response_deserializer=yolo__rpc__pb2.FrameRequest.FromString,
                 _registered_method=True)
         self.DetectFrame = channel.unary_unary(
                 '/yolo.YoloService/DetectFrame',
-                request_serializer=rpc__pb2.FrameRequest.SerializeToString,
-                response_deserializer=rpc__pb2.DetectReply.FromString,
+                request_serializer=yolo__rpc__pb2.FrameRequest.SerializeToString,
+                response_deserializer=yolo__rpc__pb2.DetectReply.FromString,
                 _registered_method=True)
 
 
@@ -66,13 +66,13 @@ def add_YoloServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'CopyAndPaste': grpc.unary_unary_rpc_method_handler(
                     servicer.CopyAndPaste,
-                    request_deserializer=rpc__pb2.FrameRequest.FromString,
-                    response_serializer=rpc__pb2.FrameRequest.SerializeToString,
+                    request_deserializer=yolo__rpc__pb2.FrameRequest.FromString,
+                    response_serializer=yolo__rpc__pb2.FrameRequest.SerializeToString,
             ),
             'DetectFrame': grpc.unary_unary_rpc_method_handler(
                     servicer.DetectFrame,
-                    request_deserializer=rpc__pb2.FrameRequest.FromString,
-                    response_serializer=rpc__pb2.DetectReply.SerializeToString,
+                    request_deserializer=yolo__rpc__pb2.FrameRequest.FromString,
+                    response_serializer=yolo__rpc__pb2.DetectReply.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -100,8 +100,8 @@ class YoloService(object):
             request,
             target,
             '/yolo.YoloService/CopyAndPaste',
-            rpc__pb2.FrameRequest.SerializeToString,
-            rpc__pb2.FrameRequest.FromString,
+            yolo__rpc__pb2.FrameRequest.SerializeToString,
+            yolo__rpc__pb2.FrameRequest.FromString,
             options,
             channel_credentials,
             insecure,
@@ -127,8 +127,8 @@ class YoloService(object):
             request,
             target,
             '/yolo.YoloService/DetectFrame',
-            rpc__pb2.FrameRequest.SerializeToString,
-            rpc__pb2.DetectReply.FromString,
+            yolo__rpc__pb2.FrameRequest.SerializeToString,
+            yolo__rpc__pb2.DetectReply.FromString,
             options,
             channel_credentials,
             insecure,

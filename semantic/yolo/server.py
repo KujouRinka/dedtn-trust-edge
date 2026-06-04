@@ -8,8 +8,8 @@ from concurrent.futures.thread import ThreadPoolExecutor
 import numpy as np
 from ultralytics import YOLO
 
-import rpc_pb2
-import rpc_pb2_grpc
+import yolo_rpc_pb2
+import yolo_rpc_pb2_grpc
 
 
 logging.basicConfig(
@@ -30,13 +30,13 @@ class YoloPredict(object):
     return results
 
 
-class GrpcServicer(rpc_pb2_grpc.YoloServiceServicer):
+class GrpcServicer(yolo_rpc_pb2_grpc.YoloServiceServicer):
   def __init__(self, save):
     self._predictor = YoloPredict("yolo26n.pt", save)
 
   def CopyAndPaste(self, request, context):
     logger.info("CopyAndPaste test")
-    return rpc_pb2.FrameRequest(
+    return yolo_rpc_pb2.FrameRequest(
       image_data=request.image_data,
       camera_id=request.camera_id,
     )
@@ -44,10 +44,10 @@ class GrpcServicer(rpc_pb2_grpc.YoloServiceServicer):
   def DetectFrame(self, request, context):
     logger.info("DetectFrame: from camera: {}".format(request.camera_id))
     result = self._predictor.predict(request.image_data)[0]
-    ret = rpc_pb2.DetectReply()
+    ret = yolo_rpc_pb2.DetectReply()
     names = [result.names[cls.item()] for cls in result.boxes.cls.int()]  # class name of each box
     for i in range(len(result.boxes.cls)):
-      b = rpc_pb2.Box(
+      b = yolo_rpc_pb2.Box(
         class_name=names[i],
         confidence=result.boxes.conf[i],
         class_id=result.boxes.cls.int()[i],
@@ -68,7 +68,7 @@ class GrpcServer(object):
 
   def serve(self):
     server = grpc.server(ThreadPoolExecutor(max_workers=10))
-    rpc_pb2_grpc.add_YoloServiceServicer_to_server(GrpcServicer(self._save), server)
+    yolo_rpc_pb2_grpc.add_YoloServiceServicer_to_server(GrpcServicer(self._save), server)
     server.add_insecure_port(self._host + ":" + str(self._port))
     server.start()
     logger.info("YOLO RPC server up")

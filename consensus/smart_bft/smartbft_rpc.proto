@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package yolo;
+
+option go_package = "github.com/KujouRinka/consensus/smart_bft";
+
+import "messages.proto";
+
+service SmartBftService {
+  // call this when sending consensus message
+  rpc HandleMessage(smartbftprotos.Message) returns (Result);
+  // call this when receiving a forwarded
+  rpc FwdMessageReceive(FwdMessage) returns (Result);
+}
+
+message SemanticMsg {
+  uint64 sender = 1;
+  bytes payload = 2;
+}
+
+message FwdMessage {
+  uint64 sender = 1;
+  bytes payload = 2;
+}
+
+message Result {
+  bool ok = 1;
+}
