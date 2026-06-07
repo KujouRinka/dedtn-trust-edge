@@ -5,12 +5,11 @@ import "time"
 type Data interface {
 	Digest() []byte
 	ToBytes() []byte
+	Data() interface{}
 }
 
 type SemanticClaim struct {
-	ClientId  string
-	RequestId string
-	Payload   interface{}
+	Payload interface{}
 }
 
 func (s *SemanticClaim) Digest() []byte {
@@ -19,6 +18,10 @@ func (s *SemanticClaim) Digest() []byte {
 
 func (s *SemanticClaim) ToBytes() []byte {
 	return nil
+}
+
+func (s *SemanticClaim) Data() interface{} {
+	return s.Payload
 }
 
 type Config struct {

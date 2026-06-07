@@ -30,6 +30,7 @@ protoc -I=${PROJ_DIR}/semantic/yolo \
   --plugin=protoc-gen-go-grpc=$(go env GOPATH)/bin/protoc-gen-go-grpc
 
 protoc -I=${PROJ_DIR}/consensus/smart_bft \
+  -I. \
   -I "$(go env GOMODCACHE)/github.com/hyperledger-labs/!smart!b!f!t@v1.0.1/smartbftprotos" \
   --go_out=${PROJ_DIR}/consensus/smart_bft \
   --go_opt=paths=source_relative \

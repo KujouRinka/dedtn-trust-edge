@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	logLevel  string = "info"
-	logFormat string = "console"
+	LogLevel  string = "info"
+	LogFormat string = "console"
 )
 
 type SelfLogger struct {
@@ -76,21 +76,21 @@ func init() {
 }
 
 func initLogger() {
-	level, ok := logLevelMap[strings.ToLower(logLevel)]
+	level, ok := logLevelMap[strings.ToLower(LogLevel)]
 	if !ok {
-		fmt.Printf("unsupported log level: %s\n", logLevel)
+		fmt.Printf("unsupported log level: %s\n", LogLevel)
 		os.Exit(1)
 	}
-	enc, ok := logFormatMap[strings.ToLower(logFormat)]
+	enc, ok := logFormatMap[strings.ToLower(LogFormat)]
 	if !ok {
-		fmt.Printf("unsupported log format: %s\n", logFormat)
+		fmt.Printf("unsupported log format: %s\n", LogFormat)
 		os.Exit(1)
 	}
 	c := zap.Config{
 		Level:             zap.NewAtomicLevelAt(level),
 		DisableCaller:     true,
 		DisableStacktrace: true,
-		Encoding:          strings.ToLower(logFormat),
+		Encoding:          strings.ToLower(LogFormat),
 		EncoderConfig:     enc,
 		OutputPaths:       []string{"stderr"},
 		ErrorOutputPaths:  []string{"stderr"},

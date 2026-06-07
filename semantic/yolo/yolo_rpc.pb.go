@@ -233,7 +233,7 @@ const file_yolo_rpc_proto_rawDesc = "" +
 	"\x02y2\x18\a \x01(\x02R\x02y22{\n" +
 	"\vYoloService\x126\n" +
 	"\fCopyAndPaste\x12\x12.yolo.FrameRequest\x1a\x12.yolo.FrameRequest\x124\n" +
-	"\vDetectFrame\x12\x12.yolo.FrameRequest\x1a\x11.yolo.DetectReplyB%Z#github.com/KujouRinka/semantic/yolob\x06proto3"
+	"\vDetectFrame\x12\x12.yolo.FrameRequest\x1a\x11.yolo.DetectReplyB6Z4github.com/kujourinka/dedtn-trust-edge/semantic/yolob\x06proto3"
 
 var (
 	file_yolo_rpc_proto_rawDescOnce sync.Once

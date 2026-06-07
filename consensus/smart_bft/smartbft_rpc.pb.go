@@ -8,8 +8,10 @@ package smart_bft
 
 import (
 	smartbftprotos "github.com/hyperledger-labs/SmartBFT/smartbftprotos"
+	yolo "github.com/kujourinka/dedtn-trust-edge/semantic/yolo"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -22,80 +24,129 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type SemanticMsg struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Sender        uint64                 `protobuf:"varint,1,opt,name=sender,proto3" json:"sender,omitempty"`
-	Payload       []byte                 `protobuf:"bytes,2,opt,name=payload,proto3" json:"payload,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
+type VoteValue int32
 
-func (x *SemanticMsg) Reset() {
-	*x = SemanticMsg{}
-	mi := &file_smartbft_rpc_proto_msgTypes[0]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
+const (
+	VoteValue_VOTE_ACCEPT    VoteValue = 0
+	VoteValue_VOTE_REJECT    VoteValue = 1
+	VoteValue_VOTE_UNCERTAIN VoteValue = 2
+)
 
-func (x *SemanticMsg) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SemanticMsg) ProtoMessage() {}
-
-func (x *SemanticMsg) ProtoReflect() protoreflect.Message {
-	mi := &file_smartbft_rpc_proto_msgTypes[0]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
+// Enum value maps for VoteValue.
+var (
+	VoteValue_name = map[int32]string{
+		0: "VOTE_ACCEPT",
+		1: "VOTE_REJECT",
+		2: "VOTE_UNCERTAIN",
 	}
-	return mi.MessageOf(x)
+	VoteValue_value = map[string]int32{
+		"VOTE_ACCEPT":    0,
+		"VOTE_REJECT":    1,
+		"VOTE_UNCERTAIN": 2,
+	}
+)
+
+func (x VoteValue) Enum() *VoteValue {
+	p := new(VoteValue)
+	*p = x
+	return p
 }
 
-// Deprecated: Use SemanticMsg.ProtoReflect.Descriptor instead.
-func (*SemanticMsg) Descriptor() ([]byte, []int) {
+func (x VoteValue) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (VoteValue) Descriptor() protoreflect.EnumDescriptor {
+	return file_smartbft_rpc_proto_enumTypes[0].Descriptor()
+}
+
+func (VoteValue) Type() protoreflect.EnumType {
+	return &file_smartbft_rpc_proto_enumTypes[0]
+}
+
+func (x VoteValue) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use VoteValue.Descriptor instead.
+func (VoteValue) EnumDescriptor() ([]byte, []int) {
 	return file_smartbft_rpc_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *SemanticMsg) GetSender() uint64 {
-	if x != nil {
-		return x.Sender
-	}
-	return 0
-}
-
-func (x *SemanticMsg) GetPayload() []byte {
-	if x != nil {
-		return x.Payload
-	}
-	return nil
-}
-
-type FwdMessage struct {
+type BlockRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Sender        uint64                 `protobuf:"varint,1,opt,name=sender,proto3" json:"sender,omitempty"`
-	Payload       []byte                 `protobuf:"bytes,2,opt,name=payload,proto3" json:"payload,omitempty"`
+	Requests      []*RequestEnvelope     `protobuf:"bytes,1,rep,name=requests,proto3" json:"requests,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *FwdMessage) Reset() {
-	*x = FwdMessage{}
+func (x *BlockRequest) Reset() {
+	*x = BlockRequest{}
+	mi := &file_smartbft_rpc_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BlockRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BlockRequest) ProtoMessage() {}
+
+func (x *BlockRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_smartbft_rpc_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BlockRequest.ProtoReflect.Descriptor instead.
+func (*BlockRequest) Descriptor() ([]byte, []int) {
+	return file_smartbft_rpc_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *BlockRequest) GetRequests() []*RequestEnvelope {
+	if x != nil {
+		return x.Requests
+	}
+	return nil
+}
+
+type RequestEnvelope struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	SubmitterId        string                 `protobuf:"bytes,1,opt,name=submitter_id,json=submitterId,proto3" json:"submitter_id,omitempty"`
+	ClientId           string                 `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
+	RequestId          string                 `protobuf:"bytes,3,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	SubmitterSignature []byte                 `protobuf:"bytes,4,opt,name=submitter_signature,json=submitterSignature,proto3" json:"submitter_signature,omitempty"`
+	// Types that are valid to be assigned to Payload:
+	//
+	//	*RequestEnvelope_SemanticBox
+	//	*RequestEnvelope_SemanticVote
+	//	*RequestEnvelope_SemanticDecision
+	Payload       isRequestEnvelope_Payload `protobuf_oneof:"payload"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RequestEnvelope) Reset() {
+	*x = RequestEnvelope{}
 	mi := &file_smartbft_rpc_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *FwdMessage) String() string {
+func (x *RequestEnvelope) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*FwdMessage) ProtoMessage() {}
+func (*RequestEnvelope) ProtoMessage() {}
 
-func (x *FwdMessage) ProtoReflect() protoreflect.Message {
+func (x *RequestEnvelope) ProtoReflect() protoreflect.Message {
 	mi := &file_smartbft_rpc_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -107,23 +158,281 @@ func (x *FwdMessage) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use FwdMessage.ProtoReflect.Descriptor instead.
-func (*FwdMessage) Descriptor() ([]byte, []int) {
+// Deprecated: Use RequestEnvelope.ProtoReflect.Descriptor instead.
+func (*RequestEnvelope) Descriptor() ([]byte, []int) {
 	return file_smartbft_rpc_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *FwdMessage) GetSender() uint64 {
+func (x *RequestEnvelope) GetSubmitterId() string {
 	if x != nil {
-		return x.Sender
+		return x.SubmitterId
 	}
-	return 0
+	return ""
 }
 
-func (x *FwdMessage) GetPayload() []byte {
+func (x *RequestEnvelope) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
+func (x *RequestEnvelope) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
+}
+
+func (x *RequestEnvelope) GetSubmitterSignature() []byte {
+	if x != nil {
+		return x.SubmitterSignature
+	}
+	return nil
+}
+
+func (x *RequestEnvelope) GetPayload() isRequestEnvelope_Payload {
 	if x != nil {
 		return x.Payload
 	}
 	return nil
+}
+
+func (x *RequestEnvelope) GetSemanticBox() *SemanticBox {
+	if x != nil {
+		if x, ok := x.Payload.(*RequestEnvelope_SemanticBox); ok {
+			return x.SemanticBox
+		}
+	}
+	return nil
+}
+
+func (x *RequestEnvelope) GetSemanticVote() *SemanticVote {
+	if x != nil {
+		if x, ok := x.Payload.(*RequestEnvelope_SemanticVote); ok {
+			return x.SemanticVote
+		}
+	}
+	return nil
+}
+
+func (x *RequestEnvelope) GetSemanticDecision() *SemanticDecision {
+	if x != nil {
+		if x, ok := x.Payload.(*RequestEnvelope_SemanticDecision); ok {
+			return x.SemanticDecision
+		}
+	}
+	return nil
+}
+
+type isRequestEnvelope_Payload interface {
+	isRequestEnvelope_Payload()
+}
+
+type RequestEnvelope_SemanticBox struct {
+	SemanticBox *SemanticBox `protobuf:"bytes,5,opt,name=semantic_box,json=semanticBox,proto3,oneof"`
+}
+
+type RequestEnvelope_SemanticVote struct {
+	SemanticVote *SemanticVote `protobuf:"bytes,6,opt,name=semantic_vote,json=semanticVote,proto3,oneof"`
+}
+
+type RequestEnvelope_SemanticDecision struct {
+	SemanticDecision *SemanticDecision `protobuf:"bytes,7,opt,name=semantic_decision,json=semanticDecision,proto3,oneof"`
+}
+
+func (*RequestEnvelope_SemanticBox) isRequestEnvelope_Payload() {}
+
+func (*RequestEnvelope_SemanticVote) isRequestEnvelope_Payload() {}
+
+func (*RequestEnvelope_SemanticDecision) isRequestEnvelope_Payload() {}
+
+type SemanticBox struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Reply         *yolo.DetectReply      `protobuf:"bytes,1,opt,name=reply,proto3" json:"reply,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SemanticBox) Reset() {
+	*x = SemanticBox{}
+	mi := &file_smartbft_rpc_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SemanticBox) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SemanticBox) ProtoMessage() {}
+
+func (x *SemanticBox) ProtoReflect() protoreflect.Message {
+	mi := &file_smartbft_rpc_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SemanticBox.ProtoReflect.Descriptor instead.
+func (*SemanticBox) Descriptor() ([]byte, []int) {
+	return file_smartbft_rpc_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *SemanticBox) GetReply() *yolo.DetectReply {
+	if x != nil {
+		return x.Reply
+	}
+	return nil
+}
+
+type SemanticVote struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	SemanticId      string                 `protobuf:"bytes,1,opt,name=semantic_id,json=semanticId,proto3" json:"semantic_id,omitempty"`
+	ObservationHash string                 `protobuf:"bytes,2,opt,name=observation_hash,json=observationHash,proto3" json:"observation_hash,omitempty"`
+	Round           uint64                 `protobuf:"varint,3,opt,name=round,proto3" json:"round,omitempty"`
+	VoterId         string                 `protobuf:"bytes,4,opt,name=voter_id,json=voterId,proto3" json:"voter_id,omitempty"`
+	Vote            VoteValue              `protobuf:"varint,5,opt,name=vote,proto3,enum=yolo.VoteValue" json:"vote,omitempty"`
+	VoterSignature  []byte                 `protobuf:"bytes,6,opt,name=voter_signature,json=voterSignature,proto3" json:"voter_signature,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *SemanticVote) Reset() {
+	*x = SemanticVote{}
+	mi := &file_smartbft_rpc_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SemanticVote) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SemanticVote) ProtoMessage() {}
+
+func (x *SemanticVote) ProtoReflect() protoreflect.Message {
+	mi := &file_smartbft_rpc_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SemanticVote.ProtoReflect.Descriptor instead.
+func (*SemanticVote) Descriptor() ([]byte, []int) {
+	return file_smartbft_rpc_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *SemanticVote) GetSemanticId() string {
+	if x != nil {
+		return x.SemanticId
+	}
+	return ""
+}
+
+func (x *SemanticVote) GetObservationHash() string {
+	if x != nil {
+		return x.ObservationHash
+	}
+	return ""
+}
+
+func (x *SemanticVote) GetRound() uint64 {
+	if x != nil {
+		return x.Round
+	}
+	return 0
+}
+
+func (x *SemanticVote) GetVoterId() string {
+	if x != nil {
+		return x.VoterId
+	}
+	return ""
+}
+
+func (x *SemanticVote) GetVote() VoteValue {
+	if x != nil {
+		return x.Vote
+	}
+	return VoteValue_VOTE_ACCEPT
+}
+
+func (x *SemanticVote) GetVoterSignature() []byte {
+	if x != nil {
+		return x.VoterSignature
+	}
+	return nil
+}
+
+type SemanticDecision struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	SemanticId      string                 `protobuf:"bytes,1,opt,name=semantic_id,json=semanticId,proto3" json:"semantic_id,omitempty"`
+	ObservationHash string                 `protobuf:"bytes,2,opt,name=observation_hash,json=observationHash,proto3" json:"observation_hash,omitempty"`
+	Round           uint64                 `protobuf:"varint,3,opt,name=round,proto3" json:"round,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *SemanticDecision) Reset() {
+	*x = SemanticDecision{}
+	mi := &file_smartbft_rpc_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SemanticDecision) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SemanticDecision) ProtoMessage() {}
+
+func (x *SemanticDecision) ProtoReflect() protoreflect.Message {
+	mi := &file_smartbft_rpc_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SemanticDecision.ProtoReflect.Descriptor instead.
+func (*SemanticDecision) Descriptor() ([]byte, []int) {
+	return file_smartbft_rpc_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *SemanticDecision) GetSemanticId() string {
+	if x != nil {
+		return x.SemanticId
+	}
+	return ""
+}
+
+func (x *SemanticDecision) GetObservationHash() string {
+	if x != nil {
+		return x.ObservationHash
+	}
+	return ""
+}
+
+func (x *SemanticDecision) GetRound() uint64 {
+	if x != nil {
+		return x.Round
+	}
+	return 0
 }
 
 type Result struct {
@@ -135,7 +444,7 @@ type Result struct {
 
 func (x *Result) Reset() {
 	*x = Result{}
-	mi := &file_smartbft_rpc_proto_msgTypes[2]
+	mi := &file_smartbft_rpc_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -147,7 +456,7 @@ func (x *Result) String() string {
 func (*Result) ProtoMessage() {}
 
 func (x *Result) ProtoReflect() protoreflect.Message {
-	mi := &file_smartbft_rpc_proto_msgTypes[2]
+	mi := &file_smartbft_rpc_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -160,7 +469,7 @@ func (x *Result) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Result.ProtoReflect.Descriptor instead.
 func (*Result) Descriptor() ([]byte, []int) {
-	return file_smartbft_rpc_proto_rawDescGZIP(), []int{2}
+	return file_smartbft_rpc_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Result) GetOk() bool {
@@ -174,19 +483,43 @@ var File_smartbft_rpc_proto protoreflect.FileDescriptor
 
 const file_smartbft_rpc_proto_rawDesc = "" +
 	"\n" +
-	"\x12smartbft_rpc.proto\x12\x04yolo\x1a\x0emessages.proto\"?\n" +
-	"\vSemanticMsg\x12\x16\n" +
-	"\x06sender\x18\x01 \x01(\x04R\x06sender\x12\x18\n" +
-	"\apayload\x18\x02 \x01(\fR\apayload\">\n" +
+	"\x12smartbft_rpc.proto\x12\x04yolo\x1a\x1bgoogle/protobuf/empty.proto\x1a\x0emessages.proto\x1a\x1csemantic/yolo/yolo_rpc.proto\"A\n" +
+	"\fBlockRequest\x121\n" +
+	"\brequests\x18\x01 \x03(\v2\x15.yolo.RequestEnvelopeR\brequests\"\xe6\x02\n" +
+	"\x0fRequestEnvelope\x12!\n" +
+	"\fsubmitter_id\x18\x01 \x01(\tR\vsubmitterId\x12\x1b\n" +
+	"\tclient_id\x18\x02 \x01(\tR\bclientId\x12\x1d\n" +
 	"\n" +
-	"FwdMessage\x12\x16\n" +
-	"\x06sender\x18\x01 \x01(\x04R\x06sender\x12\x18\n" +
-	"\apayload\x18\x02 \x01(\fR\apayload\"\x18\n" +
+	"request_id\x18\x03 \x01(\tR\trequestId\x12/\n" +
+	"\x13submitter_signature\x18\x04 \x01(\fR\x12submitterSignature\x126\n" +
+	"\fsemantic_box\x18\x05 \x01(\v2\x11.yolo.SemanticBoxH\x00R\vsemanticBox\x129\n" +
+	"\rsemantic_vote\x18\x06 \x01(\v2\x12.yolo.SemanticVoteH\x00R\fsemanticVote\x12E\n" +
+	"\x11semantic_decision\x18\a \x01(\v2\x16.yolo.SemanticDecisionH\x00R\x10semanticDecisionB\t\n" +
+	"\apayload\"6\n" +
+	"\vSemanticBox\x12'\n" +
+	"\x05reply\x18\x01 \x01(\v2\x11.yolo.DetectReplyR\x05reply\"\xd9\x01\n" +
+	"\fSemanticVote\x12\x1f\n" +
+	"\vsemantic_id\x18\x01 \x01(\tR\n" +
+	"semanticId\x12)\n" +
+	"\x10observation_hash\x18\x02 \x01(\tR\x0fobservationHash\x12\x14\n" +
+	"\x05round\x18\x03 \x01(\x04R\x05round\x12\x19\n" +
+	"\bvoter_id\x18\x04 \x01(\tR\avoterId\x12#\n" +
+	"\x04vote\x18\x05 \x01(\x0e2\x0f.yolo.VoteValueR\x04vote\x12'\n" +
+	"\x0fvoter_signature\x18\x06 \x01(\fR\x0evoterSignature\"t\n" +
+	"\x10SemanticDecision\x12\x1f\n" +
+	"\vsemantic_id\x18\x01 \x01(\tR\n" +
+	"semanticId\x12)\n" +
+	"\x10observation_hash\x18\x02 \x01(\tR\x0fobservationHash\x12\x14\n" +
+	"\x05round\x18\x03 \x01(\x04R\x05round\"\x18\n" +
 	"\x06Result\x12\x0e\n" +
-	"\x02ok\x18\x01 \x01(\bR\x02ok2~\n" +
-	"\x0fSmartBftService\x126\n" +
-	"\rHandleMessage\x12\x17.smartbftprotos.Message\x1a\f.yolo.Result\x123\n" +
-	"\x11FwdMessageReceive\x12\x10.yolo.FwdMessage\x1a\f.yolo.ResultB+Z)github.com/KujouRinka/consensus/smart_bftb\x06proto3"
+	"\x02ok\x18\x01 \x01(\bR\x02ok*A\n" +
+	"\tVoteValue\x12\x0f\n" +
+	"\vVOTE_ACCEPT\x10\x00\x12\x0f\n" +
+	"\vVOTE_REJECT\x10\x01\x12\x12\n" +
+	"\x0eVOTE_UNCERTAIN\x10\x022\x94\x01\n" +
+	"\x0fSmartBftService\x12@\n" +
+	"\rHandleMessage\x12\x17.smartbftprotos.Message\x1a\x16.google.protobuf.Empty\x12?\n" +
+	"\x0eReqMessageCall\x12\x15.yolo.RequestEnvelope\x1a\x16.google.protobuf.EmptyB<Z:github.com/kujourinka/dedtn-trust-edge/consensus/smart_bftb\x06proto3"
 
 var (
 	file_smartbft_rpc_proto_rawDescOnce sync.Once
@@ -200,23 +533,36 @@ func file_smartbft_rpc_proto_rawDescGZIP() []byte {
 	return file_smartbft_rpc_proto_rawDescData
 }
 
-var file_smartbft_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_smartbft_rpc_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_smartbft_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_smartbft_rpc_proto_goTypes = []any{
-	(*SemanticMsg)(nil),            // 0: yolo.SemanticMsg
-	(*FwdMessage)(nil),             // 1: yolo.FwdMessage
-	(*Result)(nil),                 // 2: yolo.Result
-	(*smartbftprotos.Message)(nil), // 3: smartbftprotos.Message
+	(VoteValue)(0),                 // 0: yolo.VoteValue
+	(*BlockRequest)(nil),           // 1: yolo.BlockRequest
+	(*RequestEnvelope)(nil),        // 2: yolo.RequestEnvelope
+	(*SemanticBox)(nil),            // 3: yolo.SemanticBox
+	(*SemanticVote)(nil),           // 4: yolo.SemanticVote
+	(*SemanticDecision)(nil),       // 5: yolo.SemanticDecision
+	(*Result)(nil),                 // 6: yolo.Result
+	(*yolo.DetectReply)(nil),       // 7: yolo.DetectReply
+	(*smartbftprotos.Message)(nil), // 8: smartbftprotos.Message
+	(*emptypb.Empty)(nil),          // 9: google.protobuf.Empty
 }
 var file_smartbft_rpc_proto_depIdxs = []int32{
-	3, // 0: yolo.SmartBftService.HandleMessage:input_type -> smartbftprotos.Message
-	1, // 1: yolo.SmartBftService.FwdMessageReceive:input_type -> yolo.FwdMessage
-	2, // 2: yolo.SmartBftService.HandleMessage:output_type -> yolo.Result
-	2, // 3: yolo.SmartBftService.FwdMessageReceive:output_type -> yolo.Result
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	2, // 0: yolo.BlockRequest.requests:type_name -> yolo.RequestEnvelope
+	3, // 1: yolo.RequestEnvelope.semantic_box:type_name -> yolo.SemanticBox
+	4, // 2: yolo.RequestEnvelope.semantic_vote:type_name -> yolo.SemanticVote
+	5, // 3: yolo.RequestEnvelope.semantic_decision:type_name -> yolo.SemanticDecision
+	7, // 4: yolo.SemanticBox.reply:type_name -> yolo.DetectReply
+	0, // 5: yolo.SemanticVote.vote:type_name -> yolo.VoteValue
+	8, // 6: yolo.SmartBftService.HandleMessage:input_type -> smartbftprotos.Message
+	2, // 7: yolo.SmartBftService.ReqMessageCall:input_type -> yolo.RequestEnvelope
+	9, // 8: yolo.SmartBftService.HandleMessage:output_type -> google.protobuf.Empty
+	9, // 9: yolo.SmartBftService.ReqMessageCall:output_type -> google.protobuf.Empty
+	8, // [8:10] is the sub-list for method output_type
+	6, // [6:8] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_smartbft_rpc_proto_init() }
@@ -224,18 +570,24 @@ func file_smartbft_rpc_proto_init() {
 	if File_smartbft_rpc_proto != nil {
 		return
 	}
+	file_smartbft_rpc_proto_msgTypes[1].OneofWrappers = []any{
+		(*RequestEnvelope_SemanticBox)(nil),
+		(*RequestEnvelope_SemanticVote)(nil),
+		(*RequestEnvelope_SemanticDecision)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartbft_rpc_proto_rawDesc), len(file_smartbft_rpc_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   3,
+			NumEnums:      1,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_smartbft_rpc_proto_goTypes,
 		DependencyIndexes: file_smartbft_rpc_proto_depIdxs,
+		EnumInfos:         file_smartbft_rpc_proto_enumTypes,
 		MessageInfos:      file_smartbft_rpc_proto_msgTypes,
 	}.Build()
 	File_smartbft_rpc_proto = out.File

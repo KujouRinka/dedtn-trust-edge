@@ -24,14 +24,14 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0eyolo_rpc.proto\x12\x04yolo\"5\n\x0c\x46rameRequest\x12\x12\n\nimage_data\x18\x01 \x01(\x0c\x12\x11\n\tcamera_id\x18\x02 \x01(\x05\"\'\n\x0b\x44\x65tectReply\x12\x18\n\x05\x62oxes\x18\x01 \x03(\x0b\x32\t.yolo.Box\"o\n\x03\x42ox\x12\x12\n\nclass_name\x18\x01 \x01(\t\x12\x10\n\x08\x63lass_id\x18\x02 \x01(\x05\x12\x12\n\nconfidence\x18\x03 \x01(\x02\x12\n\n\x02x1\x18\x04 \x01(\x02\x12\n\n\x02y1\x18\x05 \x01(\x02\x12\n\n\x02x2\x18\x06 \x01(\x02\x12\n\n\x02y2\x18\x07 \x01(\x02\x32{\n\x0bYoloService\x12\x36\n\x0c\x43opyAndPaste\x12\x12.yolo.FrameRequest\x1a\x12.yolo.FrameRequest\x12\x34\n\x0b\x44\x65tectFrame\x12\x12.yolo.FrameRequest\x1a\x11.yolo.DetectReplyB%Z#github.com/KujouRinka/semantic/yolob\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0eyolo_rpc.proto\x12\x04yolo\"5\n\x0c\x46rameRequest\x12\x12\n\nimage_data\x18\x01 \x01(\x0c\x12\x11\n\tcamera_id\x18\x02 \x01(\x05\"\'\n\x0b\x44\x65tectReply\x12\x18\n\x05\x62oxes\x18\x01 \x03(\x0b\x32\t.yolo.Box\"o\n\x03\x42ox\x12\x12\n\nclass_name\x18\x01 \x01(\t\x12\x10\n\x08\x63lass_id\x18\x02 \x01(\x05\x12\x12\n\nconfidence\x18\x03 \x01(\x02\x12\n\n\x02x1\x18\x04 \x01(\x02\x12\n\n\x02y1\x18\x05 \x01(\x02\x12\n\n\x02x2\x18\x06 \x01(\x02\x12\n\n\x02y2\x18\x07 \x01(\x02\x32{\n\x0bYoloService\x12\x36\n\x0c\x43opyAndPaste\x12\x12.yolo.FrameRequest\x1a\x12.yolo.FrameRequest\x12\x34\n\x0b\x44\x65tectFrame\x12\x12.yolo.FrameRequest\x1a\x11.yolo.DetectReplyB6Z4github.com/kujourinka/dedtn-trust-edge/semantic/yolob\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'yolo_rpc_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   _globals['DESCRIPTOR']._loaded_options = None
-  _globals['DESCRIPTOR']._serialized_options = b'Z#github.com/KujouRinka/semantic/yolo'
+  _globals['DESCRIPTOR']._serialized_options = b'Z4github.com/kujourinka/dedtn-trust-edge/semantic/yolo'
   _globals['_FRAMEREQUEST']._serialized_start=24
   _globals['_FRAMEREQUEST']._serialized_end=77
   _globals['_DETECTREPLY']._serialized_start=79

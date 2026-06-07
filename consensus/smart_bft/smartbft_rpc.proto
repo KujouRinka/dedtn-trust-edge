@@ -2,25 +2,70 @@ syntax = "proto3";
 
 package yolo;
 
-option go_package = "github.com/KujouRinka/consensus/smart_bft";
+option go_package = "github.com/kujourinka/dedtn-trust-edge/consensus/smart_bft";
+
+import "google/protobuf/empty.proto";
 
 import "messages.proto";
+import "semantic/yolo/yolo_rpc.proto";
 
 service SmartBftService {
   // call this when sending consensus message
-  rpc HandleMessage(smartbftprotos.Message) returns (Result);
+  rpc HandleMessage(smartbftprotos.Message) returns (google.protobuf.Empty);
   // call this when receiving a forwarded
-  rpc FwdMessageReceive(FwdMessage) returns (Result);
+  rpc ReqMessageCall(RequestEnvelope) returns (google.protobuf.Empty);
 }
 
-message SemanticMsg {
-  uint64 sender = 1;
-  bytes payload = 2;
+message BlockRequest {
+  repeated RequestEnvelope requests = 1;
 }
 
-message FwdMessage {
-  uint64 sender = 1;
-  bytes payload = 2;
+message RequestEnvelope {
+  string submitter_id = 1;
+
+  string client_id = 2;
+  string request_id = 3;
+
+  bytes submitter_signature = 4;
+
+  oneof payload {
+    SemanticBox semantic_box = 5;
+    SemanticVote semantic_vote = 6;
+    SemanticDecision semantic_decision = 7;
+  }
+}
+
+message SemanticBox {
+
+  DetectReply reply = 1;
+}
+
+enum VoteValue {
+  VOTE_ACCEPT = 0;
+  VOTE_REJECT = 1;
+  VOTE_UNCERTAIN = 2;
+}
+
+message SemanticVote {
+  string semantic_id = 1;
+  string observation_hash = 2;
+
+  uint64 round = 3;
+
+  string voter_id = 4;
+  VoteValue vote = 5;
+
+  // some option
+
+  bytes voter_signature = 6;
+}
+
+message SemanticDecision {
+  string semantic_id = 1;
+  string observation_hash = 2;
+
+  uint64 round = 3;
+
 }
 
 message Result {

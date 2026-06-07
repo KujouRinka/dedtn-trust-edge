@@ -12,6 +12,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -20,8 +21,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SmartBftService_HandleMessage_FullMethodName     = "/yolo.SmartBftService/HandleMessage"
-	SmartBftService_FwdMessageReceive_FullMethodName = "/yolo.SmartBftService/FwdMessageReceive"
+	SmartBftService_HandleMessage_FullMethodName  = "/yolo.SmartBftService/HandleMessage"
+	SmartBftService_ReqMessageCall_FullMethodName = "/yolo.SmartBftService/ReqMessageCall"
 )
 
 // SmartBftServiceClient is the client API for SmartBftService service.
@@ -29,9 +30,9 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SmartBftServiceClient interface {
 	// call this when sending consensus message
-	HandleMessage(ctx context.Context, in *smartbftprotos.Message, opts ...grpc.CallOption) (*Result, error)
+	HandleMessage(ctx context.Context, in *smartbftprotos.Message, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// call this when receiving a forwarded
-	FwdMessageReceive(ctx context.Context, in *FwdMessage, opts ...grpc.CallOption) (*Result, error)
+	ReqMessageCall(ctx context.Context, in *RequestEnvelope, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type smartBftServiceClient struct {
@@ -42,9 +43,9 @@ func NewSmartBftServiceClient(cc grpc.ClientConnInterface) SmartBftServiceClient
 	return &smartBftServiceClient{cc}
 }
 
-func (c *smartBftServiceClient) HandleMessage(ctx context.Context, in *smartbftprotos.Message, opts ...grpc.CallOption) (*Result, error) {
+func (c *smartBftServiceClient) HandleMessage(ctx context.Context, in *smartbftprotos.Message, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Result)
+	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, SmartBftService_HandleMessage_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -52,10 +53,10 @@ func (c *smartBftServiceClient) HandleMessage(ctx context.Context, in *smartbftp
 	return out, nil
 }
 
-func (c *smartBftServiceClient) FwdMessageReceive(ctx context.Context, in *FwdMessage, opts ...grpc.CallOption) (*Result, error) {
+func (c *smartBftServiceClient) ReqMessageCall(ctx context.Context, in *RequestEnvelope, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Result)
-	err := c.cc.Invoke(ctx, SmartBftService_FwdMessageReceive_FullMethodName, in, out, cOpts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, SmartBftService_ReqMessageCall_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -67,9 +68,9 @@ func (c *smartBftServiceClient) FwdMessageReceive(ctx context.Context, in *FwdMe
 // for forward compatibility.
 type SmartBftServiceServer interface {
 	// call this when sending consensus message
-	HandleMessage(context.Context, *smartbftprotos.Message) (*Result, error)
+	HandleMessage(context.Context, *smartbftprotos.Message) (*emptypb.Empty, error)
 	// call this when receiving a forwarded
-	FwdMessageReceive(context.Context, *FwdMessage) (*Result, error)
+	ReqMessageCall(context.Context, *RequestEnvelope) (*emptypb.Empty, error)
 	mustEmbedUnimplementedSmartBftServiceServer()
 }
 
@@ -80,11 +81,11 @@ type SmartBftServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSmartBftServiceServer struct{}
 
-func (UnimplementedSmartBftServiceServer) HandleMessage(context.Context, *smartbftprotos.Message) (*Result, error) {
+func (UnimplementedSmartBftServiceServer) HandleMessage(context.Context, *smartbftprotos.Message) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method HandleMessage not implemented")
 }
-func (UnimplementedSmartBftServiceServer) FwdMessageReceive(context.Context, *FwdMessage) (*Result, error) {
-	return nil, status.Error(codes.Unimplemented, "method FwdMessageReceive not implemented")
+func (UnimplementedSmartBftServiceServer) ReqMessageCall(context.Context, *RequestEnvelope) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReqMessageCall not implemented")
 }
 func (UnimplementedSmartBftServiceServer) mustEmbedUnimplementedSmartBftServiceServer() {}
 func (UnimplementedSmartBftServiceServer) testEmbeddedByValue()                         {}
@@ -125,20 +126,20 @@ func _SmartBftService_HandleMessage_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SmartBftService_FwdMessageReceive_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(FwdMessage)
+func _SmartBftService_ReqMessageCall_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestEnvelope)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SmartBftServiceServer).FwdMessageReceive(ctx, in)
+		return srv.(SmartBftServiceServer).ReqMessageCall(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: SmartBftService_FwdMessageReceive_FullMethodName,
+		FullMethod: SmartBftService_ReqMessageCall_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SmartBftServiceServer).FwdMessageReceive(ctx, req.(*FwdMessage))
+		return srv.(SmartBftServiceServer).ReqMessageCall(ctx, req.(*RequestEnvelope))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -155,8 +156,8 @@ var SmartBftService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SmartBftService_HandleMessage_Handler,
 		},
 		{
-			MethodName: "FwdMessageReceive",
-			Handler:    _SmartBftService_FwdMessageReceive_Handler,
+			MethodName: "ReqMessageCall",
+			Handler:    _SmartBftService_ReqMessageCall_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -77,6 +77,7 @@ func TestRpcSend(t *testing.T) {
 	RegisterYoloServiceServer(grpcServer, s)
 	go func() {
 		go func() {
+			// fix:
 			wg.Done()
 			if err := grpcServer.Serve(listener); err != nil {
 				t.Fatal("cannot start grpc server:", err)

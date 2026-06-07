@@ -2,12 +2,18 @@ package smart_bft
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/hyperledger-labs/SmartBFT/smartbftprotos"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
+	rpcpeer "google.golang.org/grpc/peer"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type RpcClient struct {
@@ -37,23 +43,63 @@ func (c *RpcClient) Close() error {
 
 type RpcServer struct {
 	UnimplementedSmartBftServiceServer
-	addr  string
-	port  uint16
-	close chan os.Signal
+	addr string
+	port uint16
+
+	parent *Node
+	close  chan os.Signal
 }
 
-func NewRpcServer(host string, port uint16) (*RpcServer, error) {
+func NewRpcServer(host string, port uint16, parent *Node) (*RpcServer, error) {
 	return &RpcServer{
-		addr:  host,
-		port:  port,
-		close: make(chan os.Signal, 2),
+		addr:   host,
+		port:   port,
+		parent: parent,
+		close:  make(chan os.Signal, 2),
 	}, nil
 }
 
-func (s *RpcServer) HandleMessage(ctx context.Context, in *smartbftprotos.Message) (*Result, error) {
-	panic("unimplemented")
+func (s *RpcServer) HandleMessage(ctx context.Context, in *smartbftprotos.Message) (*emptypb.Empty, error) {
+	// todo: SECURITY ISSUE: should deduct sender id from context
+	_, ok := rpcpeer.FromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("cannot get peer context")
+	}
+
+	senderId, err := strconv.ParseUint(metadata.ValueFromIncomingContext(ctx, "senderId")[0], 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse sender id: %v", err)
+	}
+	s.parent.HandleMessage(senderId, in)
+	return nil, nil
 }
 
-func (s *RpcServer) FwdMessageReceive(ctx context.Context, in *FwdMessage) (*Result, error) {
-	panic("unimplemented")
+func (s *RpcServer) ReqMessageCall(ctx context.Context, in *RequestEnvelope) (*emptypb.Empty, error) {
+	b, err := proto.Marshal(in)
+	if err != nil {
+		return nil, err
+	}
+	return nil, s.parent.SubmitRequest(b)
+}
+
+type peer struct {
+	*RpcClient
+	id        uint64
+	publicKey *ecdsa.PublicKey
+}
+
+func newPeer(id uint64, host string, port uint16, pubKey *ecdsa.PublicKey) (*peer, error) {
+	client, err := NewRpcClient(host, port)
+	if err != nil {
+		return nil, err
+	}
+	return &peer{
+		RpcClient: client,
+		id:        id,
+		publicKey: pubKey,
+	}, nil
+}
+
+func (p *peer) Id() uint64 {
+	return p.id
 }

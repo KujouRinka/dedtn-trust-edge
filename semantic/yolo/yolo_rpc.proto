@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package yolo;
 
-option go_package = "github.com/KujouRinka/semantic/yolo";
+option go_package = "github.com/kujourinka/dedtn-trust-edge/semantic/yolo";
 
 service YoloService {
   rpc CopyAndPaste (FrameRequest) returns (FrameRequest);

@@ -60,7 +60,7 @@ func (i *ImgSemanticGen) Run() error {
 				return err
 			}
 
-			i.msg <- SemanticClaim{Payload: resp.Boxes}
+			i.msg <- SemanticClaim{Payload: resp}
 			time.Sleep(i.watchInterval)
 		}
 	}

@@ -3,6 +3,7 @@ module github.com/kujourinka/dedtn-trust-edge
 go 1.26.0
 
 require (
+	github.com/bwmarrin/snowflake v0.3.0
 	github.com/ethereum/go-ethereum v1.17.3
 	github.com/go-gst/go-gst v1.4.0
 	github.com/hyperledger-labs/SmartBFT v1.0.1
