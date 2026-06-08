@@ -7,22 +7,26 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/log"
+
 	"github.com/kujourinka/dedtn-trust-edge/semantic/device"
+	"github.com/kujourinka/dedtn-trust-edge/semantic/types"
 	"github.com/kujourinka/dedtn-trust-edge/semantic/yolo"
 )
 
 type ImgSemanticGen struct {
-	msg chan SemanticClaim
+	msg chan types.Result
 	ctx context.Context
 
-	yoloServer    *yolo.RpcClient
+	// todo: should be device
 	camera        device.Camera
+	semanticist   types.Semanticist
 	watchInterval time.Duration
 
 	io.Closer
 }
 
-func NewImgSemanticGen(cfg *ImageSemanticConfig, ctx context.Context) (*ImgSemanticGen, error) {
+func NewImgSemanticGen(cfg *types.ImageSemanticConfig, ctx context.Context) (*ImgSemanticGen, error) {
+	// todo: create semanticist from config
 	yoloServer, err := yolo.NewRpcClient(cfg.RpcHost, cfg.RpcPort)
 	if err != nil {
 		return nil, err
@@ -34,9 +38,9 @@ func NewImgSemanticGen(cfg *ImageSemanticConfig, ctx context.Context) (*ImgSeman
 
 	return &ImgSemanticGen{
 		ctx:           ctx,
-		msg:           make(chan SemanticClaim),
-		yoloServer:    yoloServer,
+		msg:           make(chan types.Result),
 		camera:        camera,
+		semanticist:   yoloServer,
 		watchInterval: cfg.TimeInterval,
 	}, nil
 }
@@ -55,21 +59,18 @@ func (i *ImgSemanticGen) Run() error {
 				continue
 			}
 
-			resp, err := i.yoloServer.DetectFrame(context.Background(), &yolo.FrameRequest{
-				ImageData: frame,
-				CameraId:  0,
-			})
+			result, err := i.semanticist.Semanticize(context.Background(), frame)
 			if err != nil {
 				return err
 			}
 
-			i.msg <- SemanticClaim{Payload: resp}
+			i.msg <- result
 			time.Sleep(i.watchInterval)
 		}
 	}
 }
 
-func (i *ImgSemanticGen) ReadChan() <-chan SemanticClaim {
+func (i *ImgSemanticGen) ReadChan() <-chan types.Result {
 	return i.msg
 }
 
@@ -78,7 +79,7 @@ func (i *ImgSemanticGen) Close() error {
 	if err := i.camera.Close(); err != nil {
 		errs = append(errs, err)
 	}
-	if err := i.yoloServer.Close(); err != nil {
+	if err := i.semanticist.Close(); err != nil {
 		errs = append(errs, err)
 	}
 	return errors.Join(errs...)

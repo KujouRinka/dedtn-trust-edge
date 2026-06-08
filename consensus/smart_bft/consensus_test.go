@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/kujourinka/dedtn-trust-edge/logger"
-	semantic2 "github.com/kujourinka/dedtn-trust-edge/semantic"
 	"github.com/kujourinka/dedtn-trust-edge/semantic/yolo"
 	"github.com/stretchr/testify/assert"
 )
@@ -103,7 +102,7 @@ func TestConsensus(t *testing.T) {
 	}
 
 	// generate mock data
-	var semantic semantic2.SemanticClaim
+	var yoloResult yolo.Semantic
 	var detectReply yolo.DetectReply
 	detectReply.Boxes = make([]*yolo.Box, 4)
 	for i := 0; i < 4; i++ {
@@ -120,8 +119,8 @@ func TestConsensus(t *testing.T) {
 			detectReply.Boxes[j].Confidence = (float32)(i*j%100) / 100
 		}
 
-		semantic.Payload = &detectReply
-		if err := nodes[i%nodeCount].SubmitSemantic(&semantic); err != nil {
+		yoloResult.Reply = &detectReply
+		if err := nodes[i%nodeCount].SubmitSemantic(&yoloResult); err != nil {
 			t.Fatal(fmt.Sprintf("Node%d: submit message error:", nodes[i%nodeCount].consensus.Config.SelfID), err)
 		}
 	}

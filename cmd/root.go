@@ -12,6 +12,7 @@ import (
 	"github.com/kujourinka/dedtn-trust-edge/consensus/smart_bft"
 	"github.com/kujourinka/dedtn-trust-edge/logger"
 	"github.com/kujourinka/dedtn-trust-edge/semantic"
+	semantictypes "github.com/kujourinka/dedtn-trust-edge/semantic/types"
 	"github.com/kujourinka/dedtn-trust-edge/utils"
 )
 
@@ -21,7 +22,7 @@ func init() {
 }
 
 func initGenerator() {
-	config := &semantic.ImageSemanticConfig{
+	config := &semantictypes.ImageSemanticConfig{
 		RpcHost:      "localhost",
 		RpcPort:      23334,
 		TimeInterval: 1 * time.Second,
@@ -38,7 +39,7 @@ func initGenerator() {
 
 var appDesc string = "none"
 
-var generators []semantic.Generator
+var generators []semantictypes.Generator
 
 var rootCmd = &cobra.Command{
 	Use:   "dedtn",
@@ -54,10 +55,10 @@ func Execute() {
 }
 
 func runMain(cmd *cobra.Command, args []string) {
-	chans := make([]<-chan semantic.SemanticClaim, 0, len(generators))
+	chans := make([]<-chan semantictypes.Result, 0, len(generators))
 	for _, generator := range generators {
 		chans = append(chans, generator.ReadChan())
-		go func(generator semantic.Generator) {
+		go func(generator semantictypes.Generator) {
 			if err := generator.Run(); err != nil {
 				logger.Logger.Error("generator returns error", zap.Error(err))
 			}
@@ -85,7 +86,7 @@ func runMain(cmd *cobra.Command, args []string) {
 	}
 
 	for msg := range ch {
-		logger.Logger.Infof("%v", msg)
+		logger.Logger.Infof("%v", msg.Data())
 		// for _, server := range servers {
 		// 	server.SubmitSemantic(&msg)
 		// }

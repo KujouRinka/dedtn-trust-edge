@@ -86,7 +86,7 @@ func NewVideo2Cam(filename string) (Camera, error) {
 	}, nil
 }
 
-func (c *video2cam) CurrentFrame() ([]byte, error) {
+func (c *video2cam) CurrentFrame() (Data, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -115,7 +115,7 @@ func (c *video2cam) CurrentFrame() ([]byte, error) {
 	runtime.KeepAlive(buffer)
 	runtime.KeepAlive(sample)
 
-	return imgBytes, nil
+	return &video2CamData{imgBytes}, nil
 }
 
 func (c *video2cam) Close() error {
@@ -148,4 +148,14 @@ func filePathToURI(path string) (string, error) {
 	}
 
 	return u.String(), nil
+}
+
+type video2CamData struct {
+	data []byte
+}
+
+func (d *video2CamData) deviceData() {}
+
+func (d *video2CamData) Data() []byte {
+	return d.data
 }

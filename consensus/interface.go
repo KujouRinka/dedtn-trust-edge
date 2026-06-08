@@ -1,14 +1,14 @@
 package consensus
 
 import (
-	"github.com/kujourinka/dedtn-trust-edge/semantic"
+	semantictypes "github.com/kujourinka/dedtn-trust-edge/semantic/types"
 )
 
 type Node interface {
 	Run() error
 	Stop() error
 
-	SubmitSemantic(msg semantic.Data) error
+	SubmitSemantic(msg semantictypes.Result) error
 
 	// // SendConsensus receives SmartBFT message from other replica
 	// SendConsensus() error

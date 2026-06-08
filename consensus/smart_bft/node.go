@@ -26,7 +26,7 @@ import (
 
 	"github.com/kujourinka/dedtn-trust-edge/consensus"
 	"github.com/kujourinka/dedtn-trust-edge/logger"
-	"github.com/kujourinka/dedtn-trust-edge/semantic"
+	semantictypes "github.com/kujourinka/dedtn-trust-edge/semantic/types"
 	"github.com/kujourinka/dedtn-trust-edge/semantic/yolo"
 )
 
@@ -34,8 +34,9 @@ type Node struct {
 	peers  map[uint64]*peer
 	server *RpcServer
 
-	consensus *smartbft.Consensus
-	sfNode    *snowflake.Node
+	consensus         *smartbft.Consensus
+	sfNode            *snowflake.Node
+	semanticValidator semantictypes.Validator
 
 	key *ecdsa.PrivateKey
 
@@ -156,7 +157,7 @@ func (s *Node) Run() error {
 	return nil
 }
 
-func (s *Node) SubmitSemantic(msg semantic.Data) error {
+func (s *Node) SubmitSemantic(msg semantictypes.Result) error {
 	m, ok := msg.Data().(*yolo.DetectReply)
 	if !ok {
 		return fmt.Errorf("unsupported message type")
@@ -232,8 +233,13 @@ func (s *Node) Deliver(proposal bfttypes.Proposal, signature []bfttypes.Signatur
 	for _, envelope := range blockRequest.Requests {
 		s.deliverCount.Add(1)
 
-		switch envelope.Payload.(type) {
+		switch v := envelope.Payload.(type) {
 		case *RequestEnvelope_SemanticBox:
+			// create a new goroutine for SemanticVote
+			go func() {
+				logger.Logger.Warnf("%s %v", s.idName, v)
+				// s.semanticValidator.ValidateSemantic(&Semantic)
+			}()
 		case *RequestEnvelope_SemanticVote:
 		case *RequestEnvelope_SemanticDecision:
 		default:

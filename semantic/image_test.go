@@ -5,10 +5,12 @@ import (
 	"errors"
 	"testing"
 	"time"
+
+	"github.com/kujourinka/dedtn-trust-edge/semantic/types"
 )
 
 func TestImageGenerator(t *testing.T) {
-	config := &ImageSemanticConfig{
+	config := &types.ImageSemanticConfig{
 		RpcHost:      "localhost",
 		RpcPort:      23334,
 		TimeInterval: 1,

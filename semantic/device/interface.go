@@ -4,5 +4,10 @@ import "io"
 
 type Camera interface {
 	io.Closer
-	CurrentFrame() ([]byte, error)
+	CurrentFrame() (Data, error)
+}
+
+type Data interface {
+	deviceData()
+	Data() []byte
 }
