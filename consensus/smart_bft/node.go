@@ -44,6 +44,7 @@ type Node struct {
 	ctx         context.Context
 
 	idName string
+	logger *logger.SelfLogger
 	// committed data field
 	deliverCount atomic.Uint64
 }
@@ -78,6 +79,7 @@ func NewSmartPBFServer(config *Config) (consensus.Node, error) {
 
 		idName: "node" + strconv.FormatUint(config.Id, 10),
 	}
+	node.logger = &logger.SelfLogger{Logger: logger.Logger.Named(node.idName)}
 	server.parent = node
 
 	// met := &disabled.Provider{}
@@ -104,7 +106,7 @@ func NewSmartPBFServer(config *Config) (consensus.Node, error) {
 		MembershipNotifier: node,
 		RequestInspector:   node,
 		Synchronizer:       node,
-		Logger:             logger.Logger,
+		Logger:             node.logger,
 		// Metrics:            nil,
 		Metadata: &smartbftprotos.ViewMetadata{
 			LatestSequence: 0,
@@ -137,12 +139,19 @@ func (s *Node) Run() error {
 		}
 	}()
 
+	for _, p := range s.peers {
+		if err := p.Connect(); err != nil {
+			return err
+		}
+	}
+
 	signal.Notify(
 		s.server.close,
 		os.Interrupt,
 		syscall.SIGTERM,
 	)
 	<-s.server.close
+	grpcServer.GracefulStop()
 
 	return nil
 }
@@ -172,6 +181,9 @@ func (s *Node) SubmitSemantic(msg semantic.Data) error {
 func (s *Node) Stop() error {
 	var errs []error
 	for _, p := range s.peers {
+		if p.RpcClient == nil {
+			continue
+		}
 		if err := p.Close(); err != nil {
 			errs = append(errs, err)
 		}
@@ -182,7 +194,13 @@ func (s *Node) Stop() error {
 // Synchronizer interface
 
 func (s *Node) Sync() bfttypes.SyncResponse {
-	panic("unimplemented")
+	// todo:
+	// logger.Logger.Panicf("%s Sync: not implemented", s.idName)
+	response := bfttypes.SyncResponse{
+		Latest:   bfttypes.Decision{},
+		Reconfig: bfttypes.ReconfigSync{},
+	}
+	return response
 }
 
 // RequestInspector interface

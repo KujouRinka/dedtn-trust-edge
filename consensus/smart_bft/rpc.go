@@ -85,21 +85,29 @@ func (s *RpcServer) ReqMessageCall(ctx context.Context, in *RequestEnvelope) (*e
 type peer struct {
 	*RpcClient
 	id        uint64
+	host      string
+	port      uint16
 	publicKey *ecdsa.PublicKey
 }
 
 func newPeer(id uint64, host string, port uint16, pubKey *ecdsa.PublicKey) (*peer, error) {
-	client, err := NewRpcClient(host, port)
-	if err != nil {
-		return nil, err
-	}
 	return &peer{
-		RpcClient: client,
 		id:        id,
+		host:      host,
+		port:      port,
 		publicKey: pubKey,
 	}, nil
 }
 
 func (p *peer) Id() uint64 {
 	return p.id
+}
+
+func (p *peer) Connect() error {
+	client, err := NewRpcClient(p.host, p.port)
+	if err != nil {
+		return err
+	}
+	p.RpcClient = client
+	return nil
 }

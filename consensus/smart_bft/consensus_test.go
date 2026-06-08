@@ -87,7 +87,6 @@ func TestConsensus(t *testing.T) {
 		wg.Add(1)
 		go func(node *Node) {
 			defer node.Stop()
-			// todo: fix this
 			wg.Done()
 			if err := node.Run(); err != nil {
 				errChan <- fmt.Errorf("start %s failed: %v", node.idName, err)
@@ -95,11 +94,10 @@ func TestConsensus(t *testing.T) {
 		}(node)
 	}
 
-	// todo: fix this
 	wg.Wait()
 
 	select {
-	case <-time.Tick(1 * time.Second):
+	case <-time.Tick(2 * time.Second):
 	case err := <-errChan:
 		t.Fatalf("start node failed: %v", err)
 	}
