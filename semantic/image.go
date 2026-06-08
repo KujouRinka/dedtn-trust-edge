@@ -28,6 +28,9 @@ func NewImgSemanticGen(cfg *ImageSemanticConfig, ctx context.Context) (*ImgSeman
 		return nil, err
 	}
 	camera, err := device.NewVideo2Cam(cfg.Source)
+	if err != nil {
+		return nil, err
+	}
 
 	return &ImgSemanticGen{
 		ctx:           ctx,
