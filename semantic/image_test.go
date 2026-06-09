@@ -12,7 +12,7 @@ import (
 func TestImageGenerator(t *testing.T) {
 	config := &types.ImageSemanticConfig{
 		RpcHost:      "localhost",
-		RpcPort:      23334,
+		RpcPort:      30000,
 		TimeInterval: 1,
 		Source:       "./assets/video.mp4",
 	}

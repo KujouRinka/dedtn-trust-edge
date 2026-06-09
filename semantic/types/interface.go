@@ -16,6 +16,6 @@ type Semanticist interface {
 	Close() error
 }
 
-type Validator interface {
-	ValidateSemantic(claim Result) (ok bool, err error)
+type Verifier interface {
+	VerifySemantic(result Result) (ok bool, err error)
 }

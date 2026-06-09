@@ -11,20 +11,18 @@ import (
 	"github.com/kujourinka/dedtn-trust-edge/semantic/types"
 )
 
-type Semantic struct {
-	Reply *DetectReply
+var _ types.Result = (*DetectReply)(nil)
+
+func (r *DetectReply) Digest() []byte {
+	return nil
 }
 
-func (s *Semantic) Digest() []byte {
-	panic("unimplemented")
+func (r *DetectReply) ToBytes() []byte {
+	return nil
 }
 
-func (s *Semantic) ToBytes() []byte {
-	panic("unimplemented")
-}
-
-func (s *Semantic) Data() interface{} {
-	return s.Reply
+func (r *DetectReply) Data() interface{} {
+	return r
 }
 
 type RpcClient struct {
@@ -61,5 +59,5 @@ func (c *RpcClient) Semanticize(ctx context.Context, data device.Data) (types.Re
 	if err != nil {
 		return nil, err
 	}
-	return &Semantic{Reply: resp}, nil
+	return resp, nil
 }

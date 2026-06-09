@@ -1,6 +1,9 @@
 package smart_bft
 
-import "google.golang.org/protobuf/encoding/protowire"
+import (
+	semantictypes "github.com/kujourinka/dedtn-trust-edge/semantic/types"
+	"google.golang.org/protobuf/encoding/protowire"
+)
 
 type Config struct {
 	Id      uint64
@@ -9,7 +12,8 @@ type Config struct {
 	ListenAddr string
 	ListenPort uint16
 
-	Peers []*PeerCfg
+	Peers    []*PeerCfg
+	verifier semantictypes.Verifier
 }
 
 type PeerCfg struct {

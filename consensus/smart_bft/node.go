@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"reflect"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -31,23 +32,30 @@ import (
 )
 
 type Node struct {
+	mu sync.Mutex
+
 	peers  map[uint64]*peer
 	server *RpcServer
 
-	consensus         *smartbft.Consensus
-	sfNode            *snowflake.Node
-	semanticValidator semantictypes.Validator
+	consensus        *smartbft.Consensus
+	sfNode           *snowflake.Node
+	semanticVerifier semantictypes.Verifier
 
 	key *ecdsa.PrivateKey
 
-	clock       *time.Ticker
-	secondClock *time.Ticker
-	ctx         context.Context
+	clock          *time.Ticker
+	schedulerClock *time.Ticker
+	ctx            context.Context
 
 	idName string
 	logger *logger.SelfLogger
 	// committed data field
-	deliverCount atomic.Uint64
+	semanticCount atomic.Uint64
+	voteCount     atomic.Uint64
+
+	submitted map[string]struct{}
+	// map[SemanticId][]*SemanticVote
+	committedVote map[string][]*SemanticVote
 }
 
 func NewSmartPBFServer(config *Config) (consensus.Node, error) {
@@ -71,14 +79,18 @@ func NewSmartPBFServer(config *Config) (consensus.Node, error) {
 
 	sfNode, err := snowflake.NewNode(int64(config.Id))
 	node := &Node{
-		peers:       peers,
-		server:      server,
-		sfNode:      sfNode,
-		clock:       time.NewTicker(time.Second),
-		secondClock: time.NewTicker(time.Second),
-		ctx:         context.Background(),
+		peers:            peers,
+		server:           server,
+		sfNode:           sfNode,
+		semanticVerifier: config.verifier,
+		clock:            time.NewTicker(300 * time.Millisecond),
+		schedulerClock:   time.NewTicker(100 * time.Millisecond),
+		ctx:              context.Background(),
 
 		idName: "node" + strconv.FormatUint(config.Id, 10),
+
+		submitted:     make(map[string]struct{}),
+		committedVote: make(map[string][]*SemanticVote),
 	}
 	node.logger = &logger.SelfLogger{Logger: logger.Logger.Named(node.idName)}
 	server.parent = node
@@ -94,6 +106,8 @@ func NewSmartPBFServer(config *Config) (consensus.Node, error) {
 
 	consensusCfg := bfttypes.DefaultConfig
 	consensusCfg.SelfID = config.Id
+	consensusCfg.RequestPoolSize = 20000
+	consensusCfg.IncomingMessageBufferSize = 20000
 	node.consensus = &smartbft.Consensus{
 		Config:      consensusCfg,
 		Application: node,
@@ -115,7 +129,7 @@ func NewSmartPBFServer(config *Config) (consensus.Node, error) {
 		},
 		// LastProposal:       bfttypes.Proposal{},
 		// LastSignatures:     nil,
-		Scheduler:         node.secondClock.C,
+		Scheduler:         node.schedulerClock.C,
 		ViewChangerTicker: node.clock.C,
 		// Pool:               nil,
 	}
@@ -158,25 +172,85 @@ func (s *Node) Run() error {
 }
 
 func (s *Node) SubmitSemantic(msg semantictypes.Result) error {
-	m, ok := msg.Data().(*yolo.DetectReply)
-	if !ok {
-		return fmt.Errorf("unsupported message type")
+	envelope := s.newEnvelope()
+
+	switch v := msg.Data().(type) {
+	case *yolo.DetectReply:
+		envelope.Payload = &RequestEnvelope_SemanticBox{&SemanticBox{Reply: v}}
+	default:
+		err := fmt.Errorf("attempt to submit unsupported semantic result")
+		logger.Logger.Errorf("%s error: %v", s.idName, err)
+		return err
 	}
 
+	if err := s.signEnvelope(envelope); err != nil {
+		logger.Logger.Errorf("sign envelope failed: %v", err)
+		return err
+	}
+
+	b, err := proto.Marshal(envelope)
+	if err != nil {
+		return err
+	}
+	return s.SubmitRequest(b)
+}
+
+func (s *Node) SubmitVote(semanticId string, ok bool) error {
+	envelope := s.newEnvelope()
+
+	var voteValue VoteValue
+	if ok {
+		voteValue = VoteValue_VOTE_ACCEPT
+	} else {
+		voteValue = VoteValue_VOTE_REJECT
+	}
+	vote := &SemanticVote{
+		SemanticId:      semanticId,
+		ObservationHash: "",
+		Round:           0,
+		VoterId:         s.idName,
+		Vote:            voteValue,
+		// todo: must sign
+		VoterSignature: nil,
+	}
+	// todo: fill vote.VoterSignature
+
+	envelope.Payload = &RequestEnvelope_SemanticVote{SemanticVote: vote}
+
+	if err := s.signEnvelope(envelope); err != nil {
+		logger.Logger.Errorf("sign envelope failed: %v", err)
+		return err
+	}
+	b, err := proto.Marshal(envelope)
+	if err != nil {
+		return err
+	}
+	return s.SubmitRequest(b)
+}
+
+func (s *Node) SubmitDecision(what ...interface{}) error {
+	panic("unimplemented")
+	return nil
+}
+
+func (s *Node) newEnvelope() *RequestEnvelope {
 	var envelope RequestEnvelope
 	envelope.SubmitterId = s.idName
 	envelope.ClientId = s.idName
 	// envelope.RequestId = s.sfNode.Generate().String()
 	envelope.RequestId = uuid.New().String()
-	// todo: signature
-	envelope.SubmitterSignature = nil
-	envelope.Payload = &RequestEnvelope_SemanticBox{&SemanticBox{Reply: m}}
+	return &envelope
+}
 
-	b, err := proto.Marshal(&envelope)
-	if err != nil {
-		return err
-	}
-	return s.SubmitRequest(b)
+func (s *Node) signEnvelope(envelope *RequestEnvelope) error {
+	// todo:
+	envelope.SubmitterSignature = nil
+	return nil
+}
+
+func (s *Node) semanticId(envelope *RequestEnvelope) string {
+	// todo:
+	return fmt.Sprintf("%s:%s", envelope.ClientId, envelope.RequestId)
 }
 
 func (s *Node) Stop() error {
@@ -196,7 +270,7 @@ func (s *Node) Stop() error {
 
 func (s *Node) Sync() bfttypes.SyncResponse {
 	// todo:
-	// logger.Logger.Panicf("%s Sync: not implemented", s.idName)
+	logger.Logger.Panicf("%s Sync: not implemented", s.idName)
 	response := bfttypes.SyncResponse{
 		Latest:   bfttypes.Decision{},
 		Reconfig: bfttypes.ReconfigSync{},
@@ -231,16 +305,52 @@ func (s *Node) Deliver(proposal bfttypes.Proposal, signature []bfttypes.Signatur
 		panic("panic")
 	}
 	for _, envelope := range blockRequest.Requests {
-		s.deliverCount.Add(1)
 
+	switchEntry:
 		switch v := envelope.Payload.(type) {
 		case *RequestEnvelope_SemanticBox:
+			s.semanticCount.Add(1)
 			// create a new goroutine for SemanticVote
-			go func() {
-				logger.Logger.Warnf("%s %v", s.idName, v)
-				// s.semanticValidator.ValidateSemantic(&Semantic)
-			}()
+			go func(envelope *RequestEnvelope, v *RequestEnvelope_SemanticBox) {
+				// logger.Logger.Warnf("%s %v", s.idName, v)
+				ok, err := s.semanticVerifier.VerifySemantic(v.SemanticBox.Reply)
+				if err != nil {
+					// todo:
+					s.logger.Errorf("verify semantic error: %v", err)
+					return
+				}
+				s.logger.Infof(
+					"got response from validator, client id: %v, request id: %v, status: %v",
+					envelope.ClientId, envelope.RequestId, ok,
+				)
+
+				if err := s.SubmitVote(s.semanticId(envelope), ok); err != nil {
+					s.logger.Errorf("submit vote failed: %v", err)
+				}
+			}(envelope, v)
 		case *RequestEnvelope_SemanticVote:
+			s.voteCount.Add(1)
+			// store vote result reached consensus
+			semanticId := v.SemanticVote.SemanticId
+			logger.Logger.Infof("reach vote consensus of semantic id: %s", semanticId)
+
+			s.mu.Lock()
+			votes := s.committedVote[semanticId]
+			if votes == nil {
+				votes = make([]*SemanticVote, 0, len(s.peers)/3*2+1)
+			}
+			// todo: should verify signature of SemanticVote here ?
+
+			// check duplicate voter
+			for _, vote := range votes {
+				if vote.VoterId == v.SemanticVote.VoterId {
+					s.mu.Unlock()
+					break switchEntry
+				}
+			}
+			s.committedVote[semanticId] = append(votes, v.SemanticVote)
+			s.logger.Warnf("vote committed: semantic id: %s, vote id: %s", semanticId, v.SemanticVote.Vote)
+			s.mu.Unlock()
 		case *RequestEnvelope_SemanticDecision:
 		default:
 			panic("panic")
@@ -293,7 +403,7 @@ func (s *Node) SendConsensus(targetID uint64, m *smartbftprotos.Message) {
 	ctx := metadata.AppendToOutgoingContext(s.ctx, "senderId", strconv.FormatUint(s.consensus.Config.SelfID, 10))
 	_, err := s.peers[targetID].HandleMessage(ctx, m)
 	if err != nil {
-		logger.Logger.Error("rpc HandleMessage error", zap.Error(err))
+		s.logger.Error("rpc HandleMessage error", zap.Error(err))
 	}
 }
 
@@ -302,11 +412,14 @@ func (s *Node) SendTransaction(targetID uint64, request []byte) {
 	// todo: performance
 	var envelope RequestEnvelope
 	if err := proto.Unmarshal(request, &envelope); err != nil {
-		logger.Logger.Panic("should not return error", zap.Error(err))
+		s.logger.Panic("should not return error", zap.Error(err))
 	}
-	_, err := s.peers[targetID].ReqMessageCall(s.ctx, &envelope)
+	_, err := s.peers[targetID].ReqMessageCall(context.Background(), &envelope)
 	if err != nil {
-		logger.Logger.Error("rpc SendTransaction error", zap.Error(err))
+		s.logger.Errorf("rpc SendTransaction error, msg type: %v, err: %v",
+			reflect.ValueOf(envelope.Payload).Type(),
+			err,
+		)
 	}
 }
 
@@ -316,6 +429,11 @@ func (s *Node) Nodes() []uint64 {
 		ids = append(ids, id)
 	}
 	ids = append(ids, s.consensus.Config.SelfID)
+
+	// for debug
+	if len(ids) != 10 {
+		panic("peers count should be 10")
+	}
 	return ids
 }
 

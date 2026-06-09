@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	LogLevel  string = "info"
+	LogLevel  string = "warn"
 	LogFormat string = "console"
 )
 

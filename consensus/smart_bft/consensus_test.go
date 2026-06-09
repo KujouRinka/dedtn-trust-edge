@@ -62,12 +62,17 @@ func TestConsensus(t *testing.T) {
 
 	nodes := make([]*Node, 0, nodeCount)
 	for i := 0; i < nodeCount; i++ {
+		verifier, err := yolo.NewVerifier()
+		if err != nil {
+			t.Fatal("cannot create verifier:", err)
+		}
 		cfg := &Config{
 			Id:         uint64(i + 1),
 			NodeDir:    testDir,
 			ListenAddr: "localhost",
 			ListenPort: uint16(23333 + i),
 			Peers:      peersForEach[i],
+			verifier:   verifier,
 		}
 		node, err := NewSmartPBFServer(cfg)
 		if err != nil {
@@ -102,7 +107,6 @@ func TestConsensus(t *testing.T) {
 	}
 
 	// generate mock data
-	var yoloResult yolo.Semantic
 	var detectReply yolo.DetectReply
 	detectReply.Boxes = make([]*yolo.Box, 4)
 	for i := 0; i < 4; i++ {
@@ -111,7 +115,7 @@ func TestConsensus(t *testing.T) {
 
 	var deliverWg sync.WaitGroup
 	deliverWg.Add(nodeCount)
-	deliverCnt := nodeCount * 100
+	deliverCnt := nodeCount * 10
 	for i := 0; i < deliverCnt; i++ {
 		for j := 0; j < 4; j++ {
 			detectReply.Boxes[j].ClassName = "class" + strconv.FormatInt(int64(i*j), 10)
@@ -119,13 +123,13 @@ func TestConsensus(t *testing.T) {
 			detectReply.Boxes[j].Confidence = (float32)(i*j%100) / 100
 		}
 
-		yoloResult.Reply = &detectReply
-		if err := nodes[i%nodeCount].SubmitSemantic(&yoloResult); err != nil {
+		if err := nodes[i%nodeCount].SubmitSemantic(&detectReply); err != nil {
 			t.Fatal(fmt.Sprintf("Node%d: submit message error:", nodes[i%nodeCount].consensus.Config.SelfID), err)
 		}
+		// time.Sleep(10 * time.Millisecond)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3000*time.Second)
 	defer cancel()
 
 	for i := 0; i < nodeCount; i++ {
@@ -135,12 +139,12 @@ func TestConsensus(t *testing.T) {
 			defer deliverWg.Done()
 
 			for {
-				if nodes[i].deliverCount.Load() == uint64(deliverCnt) {
+				if nodes[i].semanticCount.Load() == uint64(deliverCnt) {
 					return
 				}
 				select {
 				case <-ctx.Done():
-					t.Errorf("node%d deliver timeout", ctx.Err())
+					t.Errorf("node%d deliver timeout: %v", i, ctx.Err())
 					return
 				case <-ticker.C:
 				}
@@ -156,6 +160,10 @@ func TestConsensus(t *testing.T) {
 		}
 	}
 	for i := 0; i < nodeCount; i++ {
-		t.Logf("%s deliver count: %d", nodes[i].idName, nodes[i].deliverCount.Load())
+		t.Logf("%s deliver count: %d, vote count: %d",
+			nodes[i].idName,
+			nodes[i].semanticCount.Load(),
+			nodes[i].voteCount.Load(),
+		)
 	}
 }

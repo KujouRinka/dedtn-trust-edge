@@ -24,7 +24,7 @@ func init() {
 func initGenerator() {
 	config := &semantictypes.ImageSemanticConfig{
 		RpcHost:      "localhost",
-		RpcPort:      23334,
+		RpcPort:      30000,
 		TimeInterval: 1 * time.Second,
 		Source:       "./assets/video.mp4",
 	}
