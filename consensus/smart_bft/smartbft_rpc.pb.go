@@ -119,9 +119,9 @@ func (x *BlockRequest) GetRequests() []*RequestEnvelope {
 
 type RequestEnvelope struct {
 	state              protoimpl.MessageState `protogen:"open.v1"`
-	SubmitterId        string                 `protobuf:"bytes,1,opt,name=submitter_id,json=submitterId,proto3" json:"submitter_id,omitempty"`
-	ClientId           string                 `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`
-	RequestId          string                 `protobuf:"bytes,3,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`
+	SubmitterId        string                 `protobuf:"bytes,1,opt,name=submitter_id,json=submitterId,proto3" json:"submitter_id,omitempty"` // idName
+	ClientId           string                 `protobuf:"bytes,2,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`          // idName
+	RequestId          string                 `protobuf:"bytes,3,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`       // snowflake or uuid
 	SubmitterSignature []byte                 `protobuf:"bytes,4,opt,name=submitter_signature,json=submitterSignature,proto3" json:"submitter_signature,omitempty"`
 	// Types that are valid to be assigned to Payload:
 	//
@@ -435,6 +435,110 @@ func (x *SemanticDecision) GetRound() uint64 {
 	return 0
 }
 
+type Metadata struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	ViewId          uint64                 `protobuf:"varint,1,opt,name=view_id,json=viewId,proto3" json:"view_id,omitempty"`
+	DecisionsInView uint64                 `protobuf:"varint,2,opt,name=decisions_in_view,json=decisionsInView,proto3" json:"decisions_in_view,omitempty"`
+	LatestSequence  uint64                 `protobuf:"varint,3,opt,name=latest_sequence,json=latestSequence,proto3" json:"latest_sequence,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *Metadata) Reset() {
+	*x = Metadata{}
+	mi := &file_smartbft_rpc_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Metadata) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Metadata) ProtoMessage() {}
+
+func (x *Metadata) ProtoReflect() protoreflect.Message {
+	mi := &file_smartbft_rpc_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Metadata.ProtoReflect.Descriptor instead.
+func (*Metadata) Descriptor() ([]byte, []int) {
+	return file_smartbft_rpc_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *Metadata) GetViewId() uint64 {
+	if x != nil {
+		return x.ViewId
+	}
+	return 0
+}
+
+func (x *Metadata) GetDecisionsInView() uint64 {
+	if x != nil {
+		return x.DecisionsInView
+	}
+	return 0
+}
+
+func (x *Metadata) GetLatestSequence() uint64 {
+	if x != nil {
+		return x.LatestSequence
+	}
+	return 0
+}
+
+type LedgerBytes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RawData       []byte                 `protobuf:"bytes,1,opt,name=raw_data,json=rawData,proto3" json:"raw_data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LedgerBytes) Reset() {
+	*x = LedgerBytes{}
+	mi := &file_smartbft_rpc_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LedgerBytes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LedgerBytes) ProtoMessage() {}
+
+func (x *LedgerBytes) ProtoReflect() protoreflect.Message {
+	mi := &file_smartbft_rpc_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LedgerBytes.ProtoReflect.Descriptor instead.
+func (*LedgerBytes) Descriptor() ([]byte, []int) {
+	return file_smartbft_rpc_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *LedgerBytes) GetRawData() []byte {
+	if x != nil {
+		return x.RawData
+	}
+	return nil
+}
+
 type Result struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Ok            bool                   `protobuf:"varint,1,opt,name=ok,proto3" json:"ok,omitempty"`
@@ -444,7 +548,7 @@ type Result struct {
 
 func (x *Result) Reset() {
 	*x = Result{}
-	mi := &file_smartbft_rpc_proto_msgTypes[5]
+	mi := &file_smartbft_rpc_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -456,7 +560,7 @@ func (x *Result) String() string {
 func (*Result) ProtoMessage() {}
 
 func (x *Result) ProtoReflect() protoreflect.Message {
-	mi := &file_smartbft_rpc_proto_msgTypes[5]
+	mi := &file_smartbft_rpc_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -469,7 +573,7 @@ func (x *Result) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Result.ProtoReflect.Descriptor instead.
 func (*Result) Descriptor() ([]byte, []int) {
-	return file_smartbft_rpc_proto_rawDescGZIP(), []int{5}
+	return file_smartbft_rpc_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *Result) GetOk() bool {
@@ -510,16 +614,25 @@ const file_smartbft_rpc_proto_rawDesc = "" +
 	"\vsemantic_id\x18\x01 \x01(\tR\n" +
 	"semanticId\x12)\n" +
 	"\x10observation_hash\x18\x02 \x01(\tR\x0fobservationHash\x12\x14\n" +
-	"\x05round\x18\x03 \x01(\x04R\x05round\"\x18\n" +
+	"\x05round\x18\x03 \x01(\x04R\x05round\"x\n" +
+	"\bMetadata\x12\x17\n" +
+	"\aview_id\x18\x01 \x01(\x04R\x06viewId\x12*\n" +
+	"\x11decisions_in_view\x18\x02 \x01(\x04R\x0fdecisionsInView\x12'\n" +
+	"\x0flatest_sequence\x18\x03 \x01(\x04R\x0elatestSequence\"(\n" +
+	"\vLedgerBytes\x12\x19\n" +
+	"\braw_data\x18\x01 \x01(\fR\arawData\"\x18\n" +
 	"\x06Result\x12\x0e\n" +
 	"\x02ok\x18\x01 \x01(\bR\x02ok*A\n" +
 	"\tVoteValue\x12\x0f\n" +
 	"\vVOTE_ACCEPT\x10\x00\x12\x0f\n" +
 	"\vVOTE_REJECT\x10\x01\x12\x12\n" +
-	"\x0eVOTE_UNCERTAIN\x10\x022\x94\x01\n" +
+	"\x0eVOTE_UNCERTAIN\x10\x022\x8b\x02\n" +
 	"\x0fSmartBftService\x12@\n" +
 	"\rHandleMessage\x12\x17.smartbftprotos.Message\x1a\x16.google.protobuf.Empty\x12?\n" +
-	"\x0eReqMessageCall\x12\x15.yolo.RequestEnvelope\x1a\x16.google.protobuf.EmptyB<Z:github.com/kujourinka/dedtn-trust-edge/consensus/smart_bftb\x06proto3"
+	"\x0eReqMessageCall\x12\x15.yolo.RequestEnvelope\x1a\x16.google.protobuf.Empty\x12<\n" +
+	"\x12PullLatestMetadata\x12\x16.google.protobuf.Empty\x1a\x0e.yolo.Metadata\x127\n" +
+	"\n" +
+	"PullLedger\x12\x16.google.protobuf.Empty\x1a\x11.yolo.LedgerBytesB<Z:github.com/kujourinka/dedtn-trust-edge/consensus/smart_bftb\x06proto3"
 
 var (
 	file_smartbft_rpc_proto_rawDescOnce sync.Once
@@ -534,7 +647,7 @@ func file_smartbft_rpc_proto_rawDescGZIP() []byte {
 }
 
 var file_smartbft_rpc_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_smartbft_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_smartbft_rpc_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_smartbft_rpc_proto_goTypes = []any{
 	(VoteValue)(0),                 // 0: yolo.VoteValue
 	(*BlockRequest)(nil),           // 1: yolo.BlockRequest
@@ -542,27 +655,33 @@ var file_smartbft_rpc_proto_goTypes = []any{
 	(*SemanticBox)(nil),            // 3: yolo.SemanticBox
 	(*SemanticVote)(nil),           // 4: yolo.SemanticVote
 	(*SemanticDecision)(nil),       // 5: yolo.SemanticDecision
-	(*Result)(nil),                 // 6: yolo.Result
-	(*yolo.DetectReply)(nil),       // 7: yolo.DetectReply
-	(*smartbftprotos.Message)(nil), // 8: smartbftprotos.Message
-	(*emptypb.Empty)(nil),          // 9: google.protobuf.Empty
+	(*Metadata)(nil),               // 6: yolo.Metadata
+	(*LedgerBytes)(nil),            // 7: yolo.LedgerBytes
+	(*Result)(nil),                 // 8: yolo.Result
+	(*yolo.DetectReply)(nil),       // 9: yolo.DetectReply
+	(*smartbftprotos.Message)(nil), // 10: smartbftprotos.Message
+	(*emptypb.Empty)(nil),          // 11: google.protobuf.Empty
 }
 var file_smartbft_rpc_proto_depIdxs = []int32{
-	2, // 0: yolo.BlockRequest.requests:type_name -> yolo.RequestEnvelope
-	3, // 1: yolo.RequestEnvelope.semantic_box:type_name -> yolo.SemanticBox
-	4, // 2: yolo.RequestEnvelope.semantic_vote:type_name -> yolo.SemanticVote
-	5, // 3: yolo.RequestEnvelope.semantic_decision:type_name -> yolo.SemanticDecision
-	7, // 4: yolo.SemanticBox.reply:type_name -> yolo.DetectReply
-	0, // 5: yolo.SemanticVote.vote:type_name -> yolo.VoteValue
-	8, // 6: yolo.SmartBftService.HandleMessage:input_type -> smartbftprotos.Message
-	2, // 7: yolo.SmartBftService.ReqMessageCall:input_type -> yolo.RequestEnvelope
-	9, // 8: yolo.SmartBftService.HandleMessage:output_type -> google.protobuf.Empty
-	9, // 9: yolo.SmartBftService.ReqMessageCall:output_type -> google.protobuf.Empty
-	8, // [8:10] is the sub-list for method output_type
-	6, // [6:8] is the sub-list for method input_type
-	6, // [6:6] is the sub-list for extension type_name
-	6, // [6:6] is the sub-list for extension extendee
-	0, // [0:6] is the sub-list for field type_name
+	2,  // 0: yolo.BlockRequest.requests:type_name -> yolo.RequestEnvelope
+	3,  // 1: yolo.RequestEnvelope.semantic_box:type_name -> yolo.SemanticBox
+	4,  // 2: yolo.RequestEnvelope.semantic_vote:type_name -> yolo.SemanticVote
+	5,  // 3: yolo.RequestEnvelope.semantic_decision:type_name -> yolo.SemanticDecision
+	9,  // 4: yolo.SemanticBox.reply:type_name -> yolo.DetectReply
+	0,  // 5: yolo.SemanticVote.vote:type_name -> yolo.VoteValue
+	10, // 6: yolo.SmartBftService.HandleMessage:input_type -> smartbftprotos.Message
+	2,  // 7: yolo.SmartBftService.ReqMessageCall:input_type -> yolo.RequestEnvelope
+	11, // 8: yolo.SmartBftService.PullLatestMetadata:input_type -> google.protobuf.Empty
+	11, // 9: yolo.SmartBftService.PullLedger:input_type -> google.protobuf.Empty
+	11, // 10: yolo.SmartBftService.HandleMessage:output_type -> google.protobuf.Empty
+	11, // 11: yolo.SmartBftService.ReqMessageCall:output_type -> google.protobuf.Empty
+	6,  // 12: yolo.SmartBftService.PullLatestMetadata:output_type -> yolo.Metadata
+	7,  // 13: yolo.SmartBftService.PullLedger:output_type -> yolo.LedgerBytes
+	10, // [10:14] is the sub-list for method output_type
+	6,  // [6:10] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_smartbft_rpc_proto_init() }
@@ -581,7 +700,7 @@ func file_smartbft_rpc_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_smartbft_rpc_proto_rawDesc), len(file_smartbft_rpc_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

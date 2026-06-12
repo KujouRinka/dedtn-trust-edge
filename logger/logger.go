@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	LogLevel  string = "warn"
+	LogLevel  string = "info"
 	LogFormat string = "console"
 )
 
@@ -64,6 +64,10 @@ func (l *SelfLogger) Errorf(template string, args ...any) {
 
 func (l *SelfLogger) Warnf(template string, args ...any) {
 	l.Logger.Warn(fmt.Sprintf(template, args...))
+}
+
+func (l *SelfLogger) Fatalf(template string, args ...any) {
+	l.Logger.Fatal(fmt.Sprintf(template, args...))
 }
 
 func (l *SelfLogger) Panicf(template string, args ...any) {

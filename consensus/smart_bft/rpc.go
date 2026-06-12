@@ -82,6 +82,33 @@ func (s *RpcServer) ReqMessageCall(ctx context.Context, in *RequestEnvelope) (*e
 	return nil, s.parent.SubmitRequest(b)
 }
 
+func (s *RpcServer) PullLedger(ctx context.Context, in *emptypb.Empty) (*LedgerBytes, error) {
+	s.parent.ledger.mu.Lock()
+	defer s.parent.ledger.mu.Unlock()
+
+	b, err := s.parent.ledger.toBytes()
+	if err != nil {
+		return nil, err
+	}
+	return &LedgerBytes{RawData: b}, nil
+}
+
+func (s *RpcServer) PullLatestMetadata(ctx context.Context, in *emptypb.Empty) (*Metadata, error) {
+	s.parent.ledger.mu.Lock()
+	defer s.parent.ledger.mu.Unlock()
+
+	md := &smartbftprotos.ViewMetadata{}
+	err := proto.Unmarshal(s.parent.ledger.Decision.Proposal.Metadata, md)
+	if err != nil {
+		s.parent.logger.Panic("should not return error")
+	}
+	return &Metadata{
+		ViewId:          md.ViewId,
+		DecisionsInView: md.DecisionsInView,
+		LatestSequence:  md.LatestSequence,
+	}, nil
+}
+
 type peer struct {
 	*RpcClient
 	id        uint64

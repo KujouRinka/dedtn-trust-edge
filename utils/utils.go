@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"math/big"
+	"math/rand/v2"
 	"os"
 	"sync"
 
@@ -115,4 +116,22 @@ func MergeChan[T any](chs ...<-chan T) <-chan T {
 	}()
 
 	return out
+}
+
+func RandomIntsButV2(n, a, b, but int) []int {
+	result := make([]int, n)
+	for i := 0; i < n; {
+		r := a + rand.IntN(b-a)
+		if r == but {
+			continue
+		}
+		result[i] = r
+		i++
+	}
+	return result
+}
+
+type Pair[T any, U any] struct {
+	First  T
+	Second U
 }

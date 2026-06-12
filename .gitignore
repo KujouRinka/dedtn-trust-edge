@@ -39,5 +39,5 @@ bin/
 
 sol/ref
 runs/
-keystore/
+toolset/
 yolo26n.pt

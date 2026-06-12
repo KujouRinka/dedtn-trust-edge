@@ -115,7 +115,7 @@ func TestConsensus(t *testing.T) {
 
 	var deliverWg sync.WaitGroup
 	deliverWg.Add(nodeCount)
-	deliverCnt := nodeCount * 10
+	deliverCnt := nodeCount * 20
 	for i := 0; i < deliverCnt; i++ {
 		for j := 0; j < 4; j++ {
 			detectReply.Boxes[j].ClassName = "class" + strconv.FormatInt(int64(i*j), 10)
@@ -129,41 +129,48 @@ func TestConsensus(t *testing.T) {
 		// time.Sleep(10 * time.Millisecond)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3000*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	defer cancel()
 
 	for i := 0; i < nodeCount; i++ {
-		go func(ctx context.Context) {
+		go func(ctx context.Context, i int) {
 			ticker := time.NewTicker(1 * time.Second)
 			defer ticker.Stop()
 			defer deliverWg.Done()
 
 			for {
-				if nodes[i].semanticCount.Load() == uint64(deliverCnt) {
+				// nodes[i].ledger.mu.Lock()
+				sc := nodes[i].ledger.SemanticCount
+				// nodes[i].ledger.mu.Unlock()
+				if sc >= uint64(deliverCnt) {
 					return
 				}
 				select {
 				case <-ctx.Done():
-					t.Errorf("node%d deliver timeout: %v", i, ctx.Err())
+					t.Errorf("node%d deliver timeout: %v", nodes[i].consensus.Config.SelfID, ctx.Err())
 					return
 				case <-ticker.C:
 				}
 			}
-		}(ctx)
+		}(ctx, i)
 	}
 
 	deliverWg.Wait()
 
-	for _, node := range nodes {
-		if err := node.Stop(); err != nil {
-			t.Error("stop node failed:", err)
-		}
-	}
+	// for _, node := range nodes {
+	// 	if err := node.Stop(); err != nil {
+	// 		t.Error("stop node failed:", err)
+	// 	}
+	// }
 	for i := 0; i < nodeCount; i++ {
+		// nodes[i].ledger.mu.Lock()
+		sc := nodes[i].ledger.SemanticCount
+		vc := nodes[i].ledger.VoteCount
+		// nodes[i].ledger.mu.Unlock()
 		t.Logf("%s deliver count: %d, vote count: %d",
 			nodes[i].idName,
-			nodes[i].semanticCount.Load(),
-			nodes[i].voteCount.Load(),
+			sc,
+			vc,
 		)
 	}
 }

@@ -1,6 +1,7 @@
 package smart_bft
 
 import (
+	"cmp"
 	"context"
 	"crypto/ecdsa"
 	"errors"
@@ -9,9 +10,9 @@ import (
 	"os"
 	"os/signal"
 	"reflect"
+	"slices"
 	"strconv"
 	"sync"
-	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 	smartbft "github.com/hyperledger-labs/SmartBFT/pkg/consensus"
 	bfttypes "github.com/hyperledger-labs/SmartBFT/pkg/types"
 	"github.com/hyperledger-labs/SmartBFT/smartbftprotos"
+	"github.com/kujourinka/dedtn-trust-edge/utils"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -32,8 +34,6 @@ import (
 )
 
 type Node struct {
-	mu sync.Mutex
-
 	peers  map[uint64]*peer
 	server *RpcServer
 
@@ -46,16 +46,12 @@ type Node struct {
 	clock          *time.Ticker
 	schedulerClock *time.Ticker
 	ctx            context.Context
+	cancel         context.CancelFunc
 
 	idName string
 	logger *logger.SelfLogger
-	// committed data field
-	semanticCount atomic.Uint64
-	voteCount     atomic.Uint64
 
-	submitted map[string]struct{}
-	// map[SemanticId][]*SemanticVote
-	committedVote map[string][]*SemanticVote
+	ledger *ledger
 }
 
 func NewSmartPBFServer(config *Config) (consensus.Node, error) {
@@ -78,6 +74,10 @@ func NewSmartPBFServer(config *Config) (consensus.Node, error) {
 	}
 
 	sfNode, err := snowflake.NewNode(int64(config.Id))
+	if err != nil {
+		panic("fix me")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
 	node := &Node{
 		peers:            peers,
 		server:           server,
@@ -85,12 +85,18 @@ func NewSmartPBFServer(config *Config) (consensus.Node, error) {
 		semanticVerifier: config.verifier,
 		clock:            time.NewTicker(300 * time.Millisecond),
 		schedulerClock:   time.NewTicker(100 * time.Millisecond),
-		ctx:              context.Background(),
+		// ctx:              context.Background(),
+		ctx:    ctx,
+		cancel: cancel,
 
 		idName: "node" + strconv.FormatUint(config.Id, 10),
 
-		submitted:     make(map[string]struct{}),
-		committedVote: make(map[string][]*SemanticVote),
+		ledger: &ledger{
+			ledgerWrapper: ledgerWrapper{
+				Submitted:     make(map[string]struct{}),
+				CommittedVote: make(map[string][]*SemanticVote),
+			},
+		},
 	}
 	node.logger = &logger.SelfLogger{Logger: logger.Logger.Named(node.idName)}
 	server.parent = node
@@ -262,6 +268,7 @@ func (s *Node) Stop() error {
 		if err := p.Close(); err != nil {
 			errs = append(errs, err)
 		}
+		s.consensus.Stop()
 	}
 	return errors.Join(errs...)
 }
@@ -270,11 +277,87 @@ func (s *Node) Stop() error {
 
 func (s *Node) Sync() bfttypes.SyncResponse {
 	// todo:
-	logger.Logger.Panicf("%s Sync: not implemented", s.idName)
-	response := bfttypes.SyncResponse{
-		Latest:   bfttypes.Decision{},
-		Reconfig: bfttypes.ReconfigSync{},
+
+	// get metadata random
+	var remoteWrapper *ledgerWrapper
+
+	n := len(s.peers)/3 + 1
+	metadatas := make([]utils.Pair[*Metadata, uint64], 0, n)
+	// for _, i := range utils.RandomIntsButV2(n, 1, len(s.peers)+1, int(s.consensus.Config.SelfID)) {
+	for k, p := range s.peers {
+		s.logger.Warnf("Sync: current idx: %d", k)
+		data, err := p.PullLatestMetadata(s.ctx, nil)
+		if err != nil {
+			// s.logger.Panicf("fix this: %v", err)
+			return bfttypes.SyncResponse{}
+		}
+		metadatas = append(metadatas, utils.Pair[*Metadata, uint64]{First: data, Second: k})
+		n--
+		if n == 0 {
+			break
+		}
 	}
+	slices.SortFunc(metadatas, func(a, b utils.Pair[*Metadata, uint64]) int {
+		return cmp.Compare(b.First.LatestSequence, a.First.LatestSequence)
+	})
+
+	var fp utils.Pair[*Metadata, uint64]
+	for _, p := range metadatas {
+		b, err := s.peers[p.Second].PullLedger(s.ctx, nil)
+		if err != nil {
+			s.logger.Errorf("Sync: PullLedger failed: %v", err)
+			continue
+		}
+		remoteWrapper, err = ledgerWrapperFromBytes(b.RawData)
+		if err != nil {
+			s.logger.Errorf("Sync: decode ledger bytes failed: %v", err)
+			continue
+		}
+		fp = p
+		break
+	}
+	if remoteWrapper == nil {
+		// panic("fix this")
+		return bfttypes.SyncResponse{}
+	}
+
+	remoteMd := &smartbftprotos.ViewMetadata{}
+	err := proto.Unmarshal(remoteWrapper.Decision.Proposal.Metadata, remoteMd)
+	if err != nil {
+		s.logger.Panic("should not return error")
+	}
+
+	s.ledger.mu.Lock()
+	defer s.ledger.mu.Unlock()
+
+	md := &smartbftprotos.ViewMetadata{}
+	err = proto.Unmarshal(s.ledger.Decision.Proposal.Metadata, md)
+	if err != nil {
+		s.logger.Panic("should not return error")
+	}
+
+	response := bfttypes.SyncResponse{
+		Latest:   s.ledger.Decision,
+		Reconfig: bfttypes.ReconfigSync{InReplicatedDecisions: false},
+	}
+
+	// compare sequence
+	if remoteMd.LatestSequence > md.LatestSequence {
+		// update
+		s.logger.Warnf("Sync: pull ledger from: %d, data %v", fp.Second, fp.First)
+		response.Latest = remoteWrapper.Decision
+		s.ledger.Decision = remoteWrapper.Decision
+		s.ledger.Submitted = remoteWrapper.Submitted
+		s.ledger.CommittedVote = remoteWrapper.CommittedVote
+		s.ledger.Sequence = remoteWrapper.Sequence
+
+		// update statistic field
+		s.ledger.SemanticCount = remoteWrapper.SemanticCount
+		s.ledger.VoteCount = remoteWrapper.VoteCount
+	} else {
+		response.Latest = s.ledger.Decision
+	}
+
 	return response
 }
 
@@ -284,7 +367,7 @@ func (s *Node) RequestID(req []byte) bfttypes.RequestInfo {
 	// Should return client id and request id
 	var envelope RequestEnvelope
 	if err := proto.Unmarshal(req, &envelope); err != nil {
-		logger.Logger.Panic("should not return error", zap.Error(err))
+		logger.Logger.Panic("RequestID: should not return error", zap.Error(err))
 	}
 
 	return bfttypes.RequestInfo{ClientID: envelope.ClientId, ID: envelope.RequestId}
@@ -304,19 +387,36 @@ func (s *Node) Deliver(proposal bfttypes.Proposal, signature []bfttypes.Signatur
 		// todo:
 		panic("panic")
 	}
+
+	s.ledger.mu.Lock()
+	defer s.ledger.mu.Unlock()
+
+	s.ledger.Decision = bfttypes.Decision{
+		Proposal:   proposal,
+		Signatures: signature,
+	}
+	v := &smartbftprotos.ViewMetadata{}
+	err := proto.Unmarshal(s.ledger.Decision.Proposal.Metadata, v)
+	if err != nil {
+		s.logger.Panicf("VerificationSequence: %v", err)
+	}
+	s.ledger.Sequence = v.LatestSequence
+	s.logger.Warnf("Deliver: write sequence: %d", v.LatestSequence)
+
 	for _, envelope := range blockRequest.Requests {
 
 	switchEntry:
 		switch v := envelope.Payload.(type) {
 		case *RequestEnvelope_SemanticBox:
-			s.semanticCount.Add(1)
+			s.ledger.SemanticCount += 1
+
 			// create a new goroutine for SemanticVote
 			go func(envelope *RequestEnvelope, v *RequestEnvelope_SemanticBox) {
 				// logger.Logger.Warnf("%s %v", s.idName, v)
 				ok, err := s.semanticVerifier.VerifySemantic(v.SemanticBox.Reply)
 				if err != nil {
 					// todo:
-					s.logger.Errorf("verify semantic error: %v", err)
+					s.logger.Errorf("Deliver: verify semantic error: %v", err)
 					return
 				}
 				s.logger.Infof(
@@ -325,17 +425,16 @@ func (s *Node) Deliver(proposal bfttypes.Proposal, signature []bfttypes.Signatur
 				)
 
 				if err := s.SubmitVote(s.semanticId(envelope), ok); err != nil {
-					s.logger.Errorf("submit vote failed: %v", err)
+					s.logger.Panicf("submit vote failed: %v", err)
 				}
 			}(envelope, v)
 		case *RequestEnvelope_SemanticVote:
-			s.voteCount.Add(1)
+			s.ledger.VoteCount += 1
 			// store vote result reached consensus
 			semanticId := v.SemanticVote.SemanticId
-			logger.Logger.Infof("reach vote consensus of semantic id: %s", semanticId)
+			logger.Logger.Infof("Deliver: reach vote consensus of semantic id: %s", semanticId)
 
-			s.mu.Lock()
-			votes := s.committedVote[semanticId]
+			votes := s.ledger.CommittedVote[semanticId]
 			if votes == nil {
 				votes = make([]*SemanticVote, 0, len(s.peers)/3*2+1)
 			}
@@ -344,13 +443,11 @@ func (s *Node) Deliver(proposal bfttypes.Proposal, signature []bfttypes.Signatur
 			// check duplicate voter
 			for _, vote := range votes {
 				if vote.VoterId == v.SemanticVote.VoterId {
-					s.mu.Unlock()
 					break switchEntry
 				}
 			}
-			s.committedVote[semanticId] = append(votes, v.SemanticVote)
-			s.logger.Warnf("vote committed: semantic id: %s, vote id: %s", semanticId, v.SemanticVote.Vote)
-			s.mu.Unlock()
+			s.ledger.CommittedVote[semanticId] = append(votes, v.SemanticVote)
+			s.logger.Warnf("Deliver: vote committed: semantic id: %s, vote id: %s", semanticId, v.SemanticVote.Vote)
 		case *RequestEnvelope_SemanticDecision:
 		default:
 			panic("panic")
@@ -374,15 +471,22 @@ func (s *Node) AssembleProposal(metadata []byte, requests [][]byte) bfttypes.Pro
 	for _, req := range requests {
 		var envelope RequestEnvelope
 		if err := proto.Unmarshal(req, &envelope); err != nil {
-			logger.Logger.Panic("should not return error", zap.Error(err))
+			logger.Logger.Panic("Assemble: should not return error", zap.Error(err))
 		}
 		// do something with envelope
 		blockRequest.Requests = append(blockRequest.Requests, &envelope)
 	}
 	payload, err := proto.Marshal(&blockRequest)
 	if err != nil {
-		logger.Logger.Panic("should not return error", zap.Error(err))
+		logger.Logger.Panic("Assemble: should not return error", zap.Error(err))
 	}
+
+	md := &smartbftprotos.ViewMetadata{}
+	err = proto.Unmarshal(metadata, md)
+	if err != nil {
+		s.logger.Panicf("cannot decode metadata: %v", err)
+	}
+	s.logger.Warnf("Assemble: metadata: %v", md)
 
 	return bfttypes.Proposal{
 		Payload:  payload,
@@ -403,7 +507,7 @@ func (s *Node) SendConsensus(targetID uint64, m *smartbftprotos.Message) {
 	ctx := metadata.AppendToOutgoingContext(s.ctx, "senderId", strconv.FormatUint(s.consensus.Config.SelfID, 10))
 	_, err := s.peers[targetID].HandleMessage(ctx, m)
 	if err != nil {
-		s.logger.Error("rpc HandleMessage error", zap.Error(err))
+		s.logger.Error("SendConsensus: rpc HandleMessage error", zap.Error(err))
 	}
 }
 
@@ -416,7 +520,7 @@ func (s *Node) SendTransaction(targetID uint64, request []byte) {
 	}
 	_, err := s.peers[targetID].ReqMessageCall(context.Background(), &envelope)
 	if err != nil {
-		s.logger.Errorf("rpc SendTransaction error, msg type: %v, err: %v",
+		s.logger.Errorf("SendTransaction: rpc SendTransaction error, msg type: %v, err: %v",
 			reflect.ValueOf(envelope.Payload).Type(),
 			err,
 		)
@@ -432,7 +536,7 @@ func (s *Node) Nodes() []uint64 {
 
 	// for debug
 	if len(ids) != 10 {
-		panic("peers count should be 10")
+		panic("Nodes: peers count should be 10")
 	}
 	return ids
 }
@@ -460,7 +564,30 @@ func (s *Node) SignProposal(proposal bfttypes.Proposal, auxiliaryInput []byte) *
 
 // VerifyProposal verifies the given proposal and returns the included requests' info.
 func (s *Node) VerifyProposal(proposal bfttypes.Proposal) ([]bfttypes.RequestInfo, error) {
-	infos := s.RequestsFromProposal(proposal)
+	var blockRequest BlockRequest
+	if err := proto.Unmarshal(proposal.Payload, &blockRequest); err != nil {
+		// todo:
+		// return nil, fmt.Errorf("cannot decode proposal payload: %v", err)
+		logger.Logger.Panic("should not return error", zap.Error(err))
+	}
+	infos := make([]bfttypes.RequestInfo, 0, len(blockRequest.Requests))
+	for _, r := range blockRequest.Requests {
+		if r.ClientId == "" {
+			// todo:
+			// return bfttypes.RequestInfo{}, fmt.Errorf("empty client id")
+			s.logger.Panic("VerifyRequest: empty client id")
+		}
+		if r.RequestId == "" {
+			// todo:
+			// return bfttypes.RequestInfo{}, fmt.Errorf("empty request id")
+			s.logger.Panic("VerifyRequest: empty request id")
+		}
+		info := bfttypes.RequestInfo{
+			ClientID: r.ClientId,
+			ID:       r.RequestId,
+		}
+		infos = append(infos, info)
+	}
 	return infos, nil
 }
 
@@ -469,7 +596,19 @@ func (s *Node) VerifyProposal(proposal bfttypes.Proposal) ([]bfttypes.RequestInf
 func (s *Node) VerifyRequest(val []byte) (bfttypes.RequestInfo, error) {
 	var envelope RequestEnvelope
 	if err := proto.Unmarshal(val, &envelope); err != nil {
-		return bfttypes.RequestInfo{}, fmt.Errorf("cannot decode message: %v", err)
+		// todo:
+		// return bfttypes.RequestInfo{}, fmt.Errorf("cannot decode message: %v", err)
+		s.logger.Panic("cannot decode message")
+	}
+	if envelope.ClientId == "" {
+		// todo:
+		// return bfttypes.RequestInfo{}, fmt.Errorf("empty client id")
+		s.logger.Panic("VerifyRequest: empty client id")
+	}
+	if envelope.RequestId == "" {
+		// todo:
+		// return bfttypes.RequestInfo{}, fmt.Errorf("empty request id")
+		s.logger.Panic("VerifyRequest: empty request id")
 	}
 	return bfttypes.RequestInfo{
 		ClientID: envelope.ClientId,
@@ -491,7 +630,9 @@ func (s *Node) VerifySignature(signature bfttypes.Signature) error {
 
 // VerificationSequence returns the current verification sequence.
 func (s *Node) VerificationSequence() uint64 {
-	// todo:
+	s.ledger.mu.Lock()
+	defer s.ledger.mu.Unlock()
+	// s.logger.Warnf("VerificationSequence: %d", s.ledger.Sequence)
 	return 0
 }
 
@@ -503,6 +644,16 @@ func (s *Node) RequestsFromProposal(proposal bfttypes.Proposal) []bfttypes.Reque
 	}
 	infos := make([]bfttypes.RequestInfo, 0, len(blockRequest.Requests))
 	for _, r := range blockRequest.Requests {
+		if r.ClientId == "" {
+			// todo:
+			// return bfttypes.RequestInfo{}, fmt.Errorf("empty client id")
+			s.logger.Panic("VerifyRequest: empty client id")
+		}
+		if r.RequestId == "" {
+			// todo:
+			// return bfttypes.RequestInfo{}, fmt.Errorf("empty request id")
+			s.logger.Panic("VerifyRequest: empty request id")
+		}
 		info := bfttypes.RequestInfo{
 			ClientID: r.ClientId,
 			ID:       r.RequestId,

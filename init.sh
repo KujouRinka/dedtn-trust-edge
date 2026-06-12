@@ -1,5 +1,7 @@
 #!/bin/zsh
 
+go get github.com/ethereum/go-ethereum@1.13.15
+
 # install gstreamer
 case "$(uname)" in
   Darwin)

@@ -14,6 +14,10 @@ service SmartBftService {
   rpc HandleMessage(smartbftprotos.Message) returns (google.protobuf.Empty);
   // call this when receiving a forwarded
   rpc ReqMessageCall(RequestEnvelope) returns (google.protobuf.Empty);
+
+  rpc PullLatestMetadata(google.protobuf.Empty) returns (Metadata);
+  // pull current ledger{Decision, status}
+  rpc PullLedger(google.protobuf.Empty) returns (LedgerBytes);
 }
 
 message BlockRequest {
@@ -36,7 +40,6 @@ message RequestEnvelope {
 }
 
 message SemanticBox {
-
   DetectReply reply = 1;
 }
 
@@ -65,7 +68,16 @@ message SemanticDecision {
   string observation_hash = 2;
 
   uint64 round = 3;
+}
 
+message Metadata {
+  uint64 view_id = 1;
+  uint64 decisions_in_view = 2;
+  uint64 latest_sequence = 3;
+}
+
+message LedgerBytes {
+  bytes raw_data = 1;
 }
 
 message Result {

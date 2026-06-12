@@ -21,8 +21,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SmartBftService_HandleMessage_FullMethodName  = "/yolo.SmartBftService/HandleMessage"
-	SmartBftService_ReqMessageCall_FullMethodName = "/yolo.SmartBftService/ReqMessageCall"
+	SmartBftService_HandleMessage_FullMethodName      = "/yolo.SmartBftService/HandleMessage"
+	SmartBftService_ReqMessageCall_FullMethodName     = "/yolo.SmartBftService/ReqMessageCall"
+	SmartBftService_PullLatestMetadata_FullMethodName = "/yolo.SmartBftService/PullLatestMetadata"
+	SmartBftService_PullLedger_FullMethodName         = "/yolo.SmartBftService/PullLedger"
 )
 
 // SmartBftServiceClient is the client API for SmartBftService service.
@@ -33,6 +35,9 @@ type SmartBftServiceClient interface {
 	HandleMessage(ctx context.Context, in *smartbftprotos.Message, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// call this when receiving a forwarded
 	ReqMessageCall(ctx context.Context, in *RequestEnvelope, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	PullLatestMetadata(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Metadata, error)
+	// pull current ledger{Decision, status}
+	PullLedger(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*LedgerBytes, error)
 }
 
 type smartBftServiceClient struct {
@@ -63,6 +68,26 @@ func (c *smartBftServiceClient) ReqMessageCall(ctx context.Context, in *RequestE
 	return out, nil
 }
 
+func (c *smartBftServiceClient) PullLatestMetadata(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*Metadata, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Metadata)
+	err := c.cc.Invoke(ctx, SmartBftService_PullLatestMetadata_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *smartBftServiceClient) PullLedger(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*LedgerBytes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LedgerBytes)
+	err := c.cc.Invoke(ctx, SmartBftService_PullLedger_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SmartBftServiceServer is the server API for SmartBftService service.
 // All implementations must embed UnimplementedSmartBftServiceServer
 // for forward compatibility.
@@ -71,6 +96,9 @@ type SmartBftServiceServer interface {
 	HandleMessage(context.Context, *smartbftprotos.Message) (*emptypb.Empty, error)
 	// call this when receiving a forwarded
 	ReqMessageCall(context.Context, *RequestEnvelope) (*emptypb.Empty, error)
+	PullLatestMetadata(context.Context, *emptypb.Empty) (*Metadata, error)
+	// pull current ledger{Decision, status}
+	PullLedger(context.Context, *emptypb.Empty) (*LedgerBytes, error)
 	mustEmbedUnimplementedSmartBftServiceServer()
 }
 
@@ -86,6 +114,12 @@ func (UnimplementedSmartBftServiceServer) HandleMessage(context.Context, *smartb
 }
 func (UnimplementedSmartBftServiceServer) ReqMessageCall(context.Context, *RequestEnvelope) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method ReqMessageCall not implemented")
+}
+func (UnimplementedSmartBftServiceServer) PullLatestMetadata(context.Context, *emptypb.Empty) (*Metadata, error) {
+	return nil, status.Error(codes.Unimplemented, "method PullLatestMetadata not implemented")
+}
+func (UnimplementedSmartBftServiceServer) PullLedger(context.Context, *emptypb.Empty) (*LedgerBytes, error) {
+	return nil, status.Error(codes.Unimplemented, "method PullLedger not implemented")
 }
 func (UnimplementedSmartBftServiceServer) mustEmbedUnimplementedSmartBftServiceServer() {}
 func (UnimplementedSmartBftServiceServer) testEmbeddedByValue()                         {}
@@ -144,6 +178,42 @@ func _SmartBftService_ReqMessageCall_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SmartBftService_PullLatestMetadata_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SmartBftServiceServer).PullLatestMetadata(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SmartBftService_PullLatestMetadata_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SmartBftServiceServer).PullLatestMetadata(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SmartBftService_PullLedger_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SmartBftServiceServer).PullLedger(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SmartBftService_PullLedger_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SmartBftServiceServer).PullLedger(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SmartBftService_ServiceDesc is the grpc.ServiceDesc for SmartBftService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -158,6 +228,14 @@ var SmartBftService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReqMessageCall",
 			Handler:    _SmartBftService_ReqMessageCall_Handler,
+		},
+		{
+			MethodName: "PullLatestMetadata",
+			Handler:    _SmartBftService_PullLatestMetadata_Handler,
+		},
+		{
+			MethodName: "PullLedger",
+			Handler:    _SmartBftService_PullLedger_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
